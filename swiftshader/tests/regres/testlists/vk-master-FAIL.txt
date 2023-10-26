@@ -1,0 +1,8 @@
+dEQP-VK.texture.explicit_lod.2d.sizes.31x55_linear_linear_mipmap_linear_repeat
+dEQP-VK.texture.explicit_lod.2d.sizes.31x55_linear_linear_mipmap_nearest_repeat
+dEQP-VK.texture.explicit_lod.2d.sizes.31x55_nearest_linear_mipmap_linear_repeat
+dEQP-VK.texture.explicit_lod.2d.sizes.31x55_nearest_linear_mipmap_nearest_repeat
+dEQP-VK.texture.explicit_lod.2d.sizes.57x35_linear_linear_mipmap_linear_repeat
+dEQP-VK.texture.explicit_lod.2d.sizes.57x35_linear_linear_mipmap_nearest_repeat
+dEQP-VK.texture.explicit_lod.2d.sizes.57x35_nearest_linear_mipmap_linear_repeat
+dEQP-VK.texture.explicit_lod.2d.sizes.57x35_nearest_linear_mipmap_nearest_repeat

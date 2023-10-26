@@ -1,0 +1,2 @@
+/home/steward/Data/sdl2_miyoo/swiftshader/CMakeFiles/rebuild_cache.dir
+/home/steward/Data/sdl2_miyoo/swiftshader/CMakeFiles/edit_cache.dir

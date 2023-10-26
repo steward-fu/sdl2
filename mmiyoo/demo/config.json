@@ -1,0 +1,6 @@
+{
+  "label": "Fill Color",
+  "icon": "/mnt/SDCARD/Icons/Default/app/tweaks.png",
+  "launch": "launch.sh",
+  "description": "Fill Color"
+}
