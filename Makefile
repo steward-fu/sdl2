@@ -38,6 +38,14 @@ all:
 	cd swiftshader/build && make -j4
 	make -C sdl2
 
+.PHONY: sdl2
+sdl2:
+	make -C sdl2
+
+.PHONY: gpu
+gpu:
+	cd swiftshader/build && make -j4
+
 .PHONY: demo
 demo:
 	cp swiftshader/build/*.so $(MOD)/demo/libs/
