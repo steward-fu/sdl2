@@ -41,8 +41,6 @@
 #include "../SDL_audio_c.h"
 #include "../SDL_audiodev_c.h"
 
-#define MI_AUDIO_SAMPLE_PER_FRAME 768
-
 #if defined(MMIYOO)
 #include "mi_sys.h"
 #include "mi_common_datatype.h"
@@ -93,7 +91,7 @@ static int MMIYOO_OpenDevice(_THIS, void *handle, const char *devname, int iscap
     stSetAttr.u32ChnCnt = this->spec.channels;
     stSetAttr.eSoundmode = this->spec.channels == 2 ? E_MI_AUDIO_SOUND_MODE_STEREO : E_MI_AUDIO_SOUND_MODE_MONO;
     stSetAttr.eSamplerate = (MI_AUDIO_SampleRate_e)this->spec.freq;
-    printf("%s, freq:%d sample:%d channels:%d\n", __func__, this->spec.freq, this->spec.samples, this->spec.channels);
+    printf("%s, freq:%d, sample:%d, channels:%d\n", __func__, this->spec.freq, this->spec.samples, this->spec.channels);
     miret = MI_AO_SetPubAttr(AoDevId, &stSetAttr);
     if(miret != MI_SUCCESS) {
         printf("%s, failed to set PubAttr\n", __func__);
@@ -133,18 +131,14 @@ static void MMIYOO_PlayDevice(_THIS)
 {
 #if defined(MMIYOO)
     MI_AUDIO_Frame_t aoTestFrame;
-    MI_S32 s32RetSendStatus = 0;
 
     aoTestFrame.eBitwidth = stGetAttr.eBitwidth;
     aoTestFrame.eSoundmode = stGetAttr.eSoundmode;
     aoTestFrame.u32Len = this->hidden->mixlen;
     aoTestFrame.apVirAddr[0] = this->hidden->mixbuf;
     aoTestFrame.apVirAddr[1] = NULL;
-    do {
-        s32RetSendStatus = MI_AO_SendFrame(AoDevId, AoChn, &aoTestFrame, 1);
-        usleep(((stSetAttr.u32PtNumPerFrm * 1000) / stSetAttr.eSamplerate - 10) * 1000);
-    }
-    while(s32RetSendStatus == MI_AO_ERR_NOBUF);
+    MI_AO_SendFrame(AoDevId, AoChn, &aoTestFrame, 1);
+    usleep(((stSetAttr.u32PtNumPerFrm * 1000) / stSetAttr.eSamplerate - 10) * 1000);
 #endif
 }
 
@@ -163,7 +157,7 @@ static int MMIYOO_Init(SDL_AudioDriverImpl *impl)
     return 1;
 }
 
-AudioBootStrap MMIYOOAUDIO_bootstrap = {"MMIYOO", "MMIYOO AUDIO DRIVER", MMIYOO_Init, 0};
+AudioBootStrap MMIYOOAUDIO_bootstrap = {MMIYOO_DRIVER_NAME, "MMIYOO AUDIO DRIVER", MMIYOO_Init, 0};
 
 #endif
 
