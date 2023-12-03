@@ -6,7 +6,7 @@ int main(int argc, char **argv)
 {
     const int w = 320;
     const int h = 240;
-    const int bpp = 16;
+    const int bpp = 32;
     SDL_Window *window = NULL;
     SDL_Surface *screen = NULL;
     SDL_Texture *texture = NULL;
