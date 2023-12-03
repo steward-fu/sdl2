@@ -1,6 +1,6 @@
 {
-  "label": "SDL2 DemoApp",
+  "label": "SDL2 TestApp",
   "icon": "/mnt/SDCARD/Icons/Default/app/tweaks.png",
   "launch": "launch.sh",
-  "description": "SDL2 DemoApp"
+  "description": "SDL2 Test Application"
 }
