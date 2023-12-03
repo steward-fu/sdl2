@@ -17,7 +17,7 @@
 &nbsp;
 
 ## Miyoo Mini (Plus)
-![image](images/mmiyoo_640/mm.jpg) ![image](images/mmiyoo_640/mmp.jpg)  
+![image](images/mmiyoo/mm.jpg) ![image](images/mmiyoo/mmp.jpg)  
 
 ### Introduction
 TBD
@@ -51,7 +51,7 @@ $ sudo docker image rm mmiyoo
 &nbsp;
 
 ## TRIMUI SMART
-![image](images/trimui_320/trimui.jpg)  
+![image](images/trimui/trimui.jpg)  
 
 ### Introduction
 TBD
