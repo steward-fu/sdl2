@@ -1,6 +1,6 @@
 {
-  "label": "Fill Color",
+  "label": "SDL2 DemoApp",
   "icon": "/mnt/SDCARD/Icons/Default/app/tweaks.png",
   "launch": "launch.sh",
-  "description": "Fill Color"
+  "description": "SDL2 DemoApp"
 }
