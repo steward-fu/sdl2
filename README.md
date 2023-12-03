@@ -33,7 +33,6 @@ $ sudo docker build -t mmiyoo .
 #### How to build all libraries (SDL2 and virtual GPU)
 ```
 $ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
-$ make clean
 $ make config
 $ make
 ```
@@ -41,17 +40,19 @@ $ make
 #### How to build the SDL2 library only
 ```
 $ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
-$ make clean
-$ make config
 $ make sdl2
 ```
 
 #### How to build the virtual GPU (swiftshader) library only
 ```
 $ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
-$ make clean
-$ make config
 $ make gpu
+```
+
+#### How to build the example
+```
+$ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
+$ make example
 ```
 
 #### How to delete the build environment (Docker)
@@ -78,7 +79,6 @@ $ sudo docker build -t mmiyoo .
 #### How to build all libraries (SDL2 and virtual GPU)
 ```
 $ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
-$ make clean
 $ make config MOD=trimui
 $ make
 ```
@@ -86,17 +86,19 @@ $ make
 #### How to build the SDL2 library only
 ```
 $ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
-$ make clean
-$ make config MOD=trimui
-$ make sdl2 MOD=trimui
+$ make sdl2
 ```
 
 #### How to build the virtual GPU (swiftshader) library only
 ```
 $ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
-$ make clean
-$ make config MOD=trimui
-$ make gpu MOD=trimui
+$ make gpu
+```
+
+#### How to build the example
+```
+$ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
+$ make example MOD=trimui
 ```
 
 #### How to delete the build environment (Docker)
