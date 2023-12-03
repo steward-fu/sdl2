@@ -29,8 +29,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/mman.h>
 #include <dirent.h>
 #include <linux/input.h>
+
 #include "../../events/SDL_events_c.h"
 #include "../../core/linux/SDL_evdev.h"
 #include "../../thread/SDL_systhread.h"
@@ -38,88 +40,224 @@
 #include "SDL_video_mmiyoo.h"
 #include "SDL_event_mmiyoo.h"
 
-MMIYOO_EventInfo MMiyooEventInfo = {0};
+#ifdef MMIYOO
+    #define UP      103
+    #define DOWN    108
+    #define LEFT    105
+    #define RIGHT   106
+    #define A       57
+    #define B       29
+    #define X       42
+    #define Y       56
+    #define L1      18
+    #define L2      15
+    #define R1      20
+    #define R2      14
+    #define START   28
+    #define SELECT  97
+    #define MENU    1
+    #define POWER   116
+    #define VOLUP   115
+    #define VOLDOWN 114
+#endif
 
-extern MMIYOO_VideoInfo MMiyooVideoInfo;
+#ifdef TRIMUI
+    #define UP      103
+    #define DOWN    108
+    #define LEFT    105
+    #define RIGHT   106
+    #define A       57
+    #define B       29
+    #define X       42
+    #define Y       56
+    #define L1      15
+    #define R1      14
+    #define START   28
+    #define SELECT  97
+    #define MENU    1
+#endif
+
+MMIYOO_EventInfo evt = {0};
+
+extern GFX gfx;
+extern MMIYOO_VideoInfo vid;
 
 static int running = 0;
 static int event_fd = -1;
-static uint32_t pre_ticks = 0;
+static int lower_speed = 0;
 static SDL_sem *event_sem = NULL;
 static SDL_Thread *thread = NULL;
+static uint32_t pre_ticks = 0;
 static uint32_t pre_keypad_bitmaps = 0;
+
+extern int FB_W;
+extern int FB_H;
+
+#ifdef TRIMUI
+typedef struct _cust_key_t {
+    int fd;
+    uint8_t *mem;
+    uint32_t *gpio;
+    uint32_t pre_cfg;
+} cust_key_t;
+
+static cust_key_t cust_key = {0};
+#endif
+
+const SDL_Scancode code[]={
+    SDLK_UP,            // UP
+    SDLK_DOWN,          // DOWN
+    SDLK_LEFT,          // LEFT
+    SDLK_RIGHT,         // RIGHT
+    SDLK_SPACE,         // A
+    SDLK_LCTRL,         // B
+    SDLK_LSHIFT,        // X
+    SDLK_LALT,          // Y
+    SDLK_e,             // L1
+    SDLK_t,             // R1
+    SDLK_TAB,           // L2
+    SDLK_BACKSPACE,     // R2
+    SDLK_RCTRL,         // SELECT
+    SDLK_RETURN,        // START
+    SDLK_HOME,          // MENU
+    SDLK_0,             // QUICK SAVE
+    SDLK_1,             // QUICK LOAD
+    SDLK_2,             // FAST FORWARD
+    SDLK_3,             // EXIT
+    SDLK_HOME,          // MENU (Onion system)
+};
+
+int volume_inc(void);
+int volume_dec(void);
 
 static void check_mouse_pos(void)
 {
-    if (MMiyooEventInfo.mouse.y < MMiyooEventInfo.mouse.miny) {
-        MMiyooEventInfo.mouse.y = MMiyooEventInfo.mouse.miny;
+    if (evt.mouse.y < evt.mouse.miny) {
+        evt.mouse.y = evt.mouse.miny;
     }
-    if (MMiyooEventInfo.mouse.y > MMiyooEventInfo.mouse.maxy) {
-        MMiyooEventInfo.mouse.y = MMiyooEventInfo.mouse.maxy;
+    if (evt.mouse.y > evt.mouse.maxy) {
+        evt.mouse.y = evt.mouse.maxy;
     }
-    if (MMiyooEventInfo.mouse.x < MMiyooEventInfo.mouse.minx) {
-        MMiyooEventInfo.mouse.x = MMiyooEventInfo.mouse.minx;
+    if (evt.mouse.x < evt.mouse.minx) {
+        evt.mouse.x = evt.mouse.minx;
     }
-    if (MMiyooEventInfo.mouse.x >= MMiyooEventInfo.mouse.maxx) {
-        MMiyooEventInfo.mouse.x = MMiyooEventInfo.mouse.maxx;
+    if (evt.mouse.x >= evt.mouse.maxx) {
+        evt.mouse.x = evt.mouse.maxx;
     }
 }
 
 static int get_move_interval(int type)
 {
     float move = 0.0;
+    long yv = 35000;
+    long xv = 30000;
 
-    move = ((float)clock() - pre_ticks) / ((type == 0) ? 10000 : 12000);
+    if (lower_speed) {
+        yv*= 2;
+        xv*= 2;
+    }
+
+    move = ((float)clock() - pre_ticks) / ((type == 0) ? xv : yv);
     if (move <= 0.0) {
         move = 1.0;
     }
     return (int)(1.0 * move);
 }
 
+static void set_key(uint32_t bit, int val)
+{
+    if (val) {
+        evt.keypad.bitmaps|= (1 << bit);
+    }
+    else {
+        evt.keypad.bitmaps&= ~(1 << bit);
+    }
+}
+
 int EventUpdate(void *data)
 {
-    uint32_t bit = 0;
     struct input_event ev = {0};
+
+    uint32_t l1 = L1;
+    uint32_t r1 = R1;
+#ifdef MMIYOO
+    uint32_t l2 = L2;
+    uint32_t r2 = R2;
+#endif
+
+    uint32_t a = A;
+    uint32_t b = B;
+    uint32_t x = X;
+    uint32_t y = Y;
+
+    uint32_t up = UP;
+    uint32_t down = DOWN;
+    uint32_t left = LEFT;
+    uint32_t right = RIGHT;
 
     while (running) {
         SDL_SemWait(event_sem);
+
+        up = UP;
+        down = DOWN;
+        left = LEFT;
+        right = RIGHT;
+
+        a = A;
+        b = B;
+        x = X;
+        y = Y;
+
+#ifdef MMIYOO
+        l1 = L1;
+        l2 = L2;
+        r1 = R1;
+        r2 = R2;
+#endif
+
+#ifdef TRIMUI
+        if (cust_key.gpio != NULL) {
+            static uint32_t pre_value = 0;
+            uint32_t v = *cust_key.gpio & 0x800;
+
+            if (v != pre_value) {
+                pre_value = v;
+                set_key(MYKEY_R2, !v);
+            }
+        }
+#endif
+
         if (event_fd > 0) {
             if (read(event_fd, &ev, sizeof(struct input_event))) {
                 if ((ev.type == EV_KEY) && (ev.value != 2)) {
-                    //printf("%s, code:%d\n", __func__, ev.code);
+                    if (ev.code == l1)      { set_key(MYKEY_L1,    ev.value); }
+                    if (ev.code == r1)      { set_key(MYKEY_R1,    ev.value); }
+#ifdef MMIYOO
+                    if (ev.code == l2)      { set_key(MYKEY_L2,    ev.value); }
+                    if (ev.code == r2)      { set_key(MYKEY_R2,    ev.value); }
+#endif
+                    if (ev.code == up)      { set_key(MYKEY_UP,    ev.value); }
+                    if (ev.code == down)    { set_key(MYKEY_DOWN,  ev.value); }
+                    if (ev.code == left)    { set_key(MYKEY_LEFT,  ev.value); }
+                    if (ev.code == right)   { set_key(MYKEY_RIGHT, ev.value); }
+                    if (ev.code == a)       { set_key(MYKEY_A,     ev.value); }
+                    if (ev.code == b)       { set_key(MYKEY_B,     ev.value); }
+                    if (ev.code == x)       { set_key(MYKEY_X,     ev.value); }
+                    if (ev.code == y)       { set_key(MYKEY_Y,     ev.value); }
 
                     switch (ev.code) {
-                    case 103: bit = (1 << MYKEY_UP);      break;
-                    case 108: bit = (1 << MYKEY_DOWN);    break;
-                    case 105: bit = (1 << MYKEY_LEFT);    break;
-                    case 106: bit = (1 << MYKEY_RIGHT);   break;
-                    case 57:  bit = (1 << MYKEY_A);       break;
-                    case 29:  bit = (1 << MYKEY_B);       break;
-                    case 42:  bit = (1 << MYKEY_X);       break;
-                    case 56:  bit = (1 << MYKEY_Y);       break;
-                    case 28:  bit = (1 << MYKEY_START);   break;
-                    case 97:  bit = (1 << MYKEY_SELECT);  break;
-                    case 18:  bit = (1 << MYKEY_L1);      break;
-                    case 15:  bit = (1 << MYKEY_L2);      break;
-                    case 20:  bit = (1 << MYKEY_R1);      break;
-                    case 14:  bit = (1 << MYKEY_R2);      break;
-                    case 1:   bit = (1 << MYKEY_MENU);    break;
-                    case 116: bit = (1 << MYKEY_POWER);   break;
-                    case 115: bit = (1 << MYKEY_VOLUP);   break;
-                    case 114: bit = (1 << MYKEY_VOLDOWN); break;
-                    }
-
-                    if(bit){
-                        if(ev.value){
-                            MMiyooEventInfo.keypad.bitmaps|= bit;
-                        }
-                        else{
-                            MMiyooEventInfo.keypad.bitmaps&= ~bit;
-                        }
+                    case START:   set_key(MYKEY_START, ev.value);   break;
+                    case SELECT:  set_key(MYKEY_SELECT, ev.value);  break;
+                    case MENU:    set_key(MYKEY_MENU, ev.value);    break;
+#ifdef MMIYOO
+                    case POWER:   set_key(MYKEY_POWER, ev.value);   break;
+                    case VOLUP:   set_key(MYKEY_VOLUP, ev.value);   break;
+                    case VOLDOWN: set_key(MYKEY_VOLDOWN, ev.value); break;
+#endif
                     }
                 }
-            
-                if (!(MMiyooEventInfo.keypad.bitmaps & 0x0f)) {
+
+                if (!(evt.keypad.bitmaps & 0x0f)) {
                     pre_ticks = clock();
                 }
             }
@@ -134,21 +272,43 @@ int EventUpdate(void *data)
 void MMIYOO_EventInit(void)
 {
     pre_keypad_bitmaps = 0;
-    memset(&MMiyooEventInfo, 0, sizeof(MMiyooEventInfo));
-    MMiyooEventInfo.mouse.minx = 0;
-    MMiyooEventInfo.mouse.miny = 0;
-    MMiyooEventInfo.mouse.maxx = 256;
-    MMiyooEventInfo.mouse.maxy = 192;
-    MMiyooEventInfo.mouse.x = 50;
-    MMiyooEventInfo.mouse.y = 190;
-    MMiyooEventInfo.mode = MMIYOO_KEYPAD_MODE;
+    memset(&evt, 0, sizeof(evt));
+    evt.mouse.minx = 0;
+    evt.mouse.miny = 0;
+    evt.mouse.maxx = FB_W;
+    evt.mouse.maxy = FB_H;
+    evt.mouse.x = (evt.mouse.maxx - evt.mouse.minx) / 2;
+    evt.mouse.y = (evt.mouse.maxy - evt.mouse.miny) / 2;
 
-#if defined(MMIYOO)
+#ifdef TRIMUI
+    cust_key.gpio = NULL;
+    cust_key.fd = open("/dev/mem", O_RDWR);
+    printf(PREFIX"cust_key.fd %d\n", cust_key.fd);
+    if (cust_key.fd > 0) {
+        cust_key.mem = mmap(0, 4096, PROT_READ | PROT_WRITE, MAP_SHARED, cust_key.fd, 0x01c20000);
+        printf(PREFIX"cust_key.mem %p\n", cust_key.mem);
+        if (cust_key.mem != MAP_FAILED) {
+            uint32_t *p = NULL;
+
+            p = (uint32_t *)(cust_key.mem + 0x800 + (0x24 * 6) + 0x04);
+            cust_key.pre_cfg = *p;
+            *p &= 0xffff0fff;
+
+            p = (uint32_t *)(cust_key.mem + 0x800 + (0x24 * 6) + 0x1c);
+            *p |= 0x00400000;
+
+            cust_key.gpio = (uint32_t *)(cust_key.mem + 0x800 + (0x24 * 6) + 0x10);
+            printf(PREFIX"cust_key.gpio %p\n", cust_key.gpio);
+        }
+    }
+    evt.mouse.y = (evt.mouse.maxy - evt.mouse.miny) / 2;
+#endif
+    evt.mode = MMIYOO_KEYPAD_MODE;
+
     event_fd = open("/dev/input/event0", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
     if(event_fd < 0){
-        printf("failed to open /dev/input/event0\n");
+        printf(PREFIX"failed to open /dev/input/event0\n");
     }
-#endif
 
     if((event_sem =  SDL_CreateSemaphore(1)) == NULL) {
         SDL_SetError("Can't create input semaphore");
@@ -171,69 +331,106 @@ void MMIYOO_EventDeinit(void)
         close(event_fd);
         event_fd = -1;
     }
+
+#ifdef TRIMUI
+    if (cust_key.fd > 0) {
+        uint32_t *p = NULL;
+
+        p = (uint32_t *)(cust_key.mem + 0x800 + (0x24 * 6) + 0x04);
+        *p = cust_key.pre_cfg;
+        munmap(cust_key.mem, 4096);
+        close(cust_key.fd);
+
+        cust_key.gpio = NULL;
+        cust_key.fd = -1;
+    }
+#endif
 }
 
 void MMIYOO_PumpEvents(_THIS)
 {
-    const SDL_Scancode code[]={
-        SDLK_UP, SDLK_DOWN, SDLK_LEFT, SDLK_RIGHT,
-        SDLK_SPACE, SDLK_LCTRL, SDLK_LSHIFT, SDLK_LALT,
-        SDLK_e, SDLK_t, SDLK_TAB, SDLK_BACKSPACE,
-        SDLK_RCTRL, SDLK_RETURN, SDLK_ESCAPE
-    };
-
     SDL_SemWait(event_sem);
-    if (MMiyooEventInfo.mode == MMIYOO_KEYPAD_MODE) {
-        if (pre_keypad_bitmaps != MMiyooEventInfo.keypad.bitmaps) {
+    if (evt.mode == MMIYOO_KEYPAD_MODE) {
+        if (pre_keypad_bitmaps != evt.keypad.bitmaps) {
             int cc = 0;
-            uint32_t v0 = pre_keypad_bitmaps;
-            uint32_t v1 = MMiyooEventInfo.keypad.bitmaps;
+            uint32_t bit = 0;
+            uint32_t changed = pre_keypad_bitmaps ^ evt.keypad.bitmaps;
 
             for (cc=0; cc<=MYKEY_LAST_BITS; cc++) {
-                if ((v0 & 1) != (v1 & 1)) {
-                    SDL_SendKeyboardKey((v1 & 1) ? SDL_PRESSED : SDL_RELEASED, SDL_GetScancodeFromKey(code[cc]));
+                bit = 1 << cc;
+                if (changed & bit) {
+                    SDL_SendKeyboardKey((evt.keypad.bitmaps & bit) ? SDL_PRESSED : SDL_RELEASED, SDL_GetScancodeFromKey(code[cc]));
                 }
-                v0>>= 1;
-                v1>>= 1;
             }
-            pre_keypad_bitmaps = MMiyooEventInfo.keypad.bitmaps;
+
+#ifdef TRIMUI
+            if (pre_keypad_bitmaps & (1 << MYKEY_R2)) {
+                set_key(MYKEY_R2, 0);
+            }
+            if (pre_keypad_bitmaps & (1 << MYKEY_L2)) {
+                set_key(MYKEY_L2, 0);
+            }
+#endif
+            pre_keypad_bitmaps = evt.keypad.bitmaps;
         }
     }
     else {
         int updated = 0;
-        
-        if (pre_keypad_bitmaps != MMiyooEventInfo.keypad.bitmaps) {
-            uint32_t v0 = pre_keypad_bitmaps;
-            uint32_t v1 = MMiyooEventInfo.keypad.bitmaps;
+        if (pre_keypad_bitmaps != evt.keypad.bitmaps) {
+            uint32_t cc = 0;
+            uint32_t bit = 0;
+            uint32_t changed = pre_keypad_bitmaps ^ evt.keypad.bitmaps;
 
-            if ((v0 & (1 << MYKEY_A)) != (v1 & (1 << MYKEY_A))) {
-                SDL_SendMouseButton(MMiyooVideoInfo.window, 0, (v1 & (1 << MYKEY_A)) ? SDL_PRESSED : SDL_RELEASED, SDL_BUTTON_LEFT);
+            if (changed & (1 << MYKEY_A)) {
+                SDL_SendMouseButton(vid.window, 0, (evt.keypad.bitmaps & (1 << MYKEY_A)) ? SDL_PRESSED : SDL_RELEASED, SDL_BUTTON_LEFT);
+            }
+
+            for (cc=0; cc<=MYKEY_LAST_BITS; cc++) {
+                bit = 1 << cc;
+                if ((cc == MYKEY_FF) || (cc == MYKEY_QSAVE) || (cc == MYKEY_QLOAD) || (cc == MYKEY_EXIT) || (cc == MYKEY_R2)) {
+                    if (changed & bit) {
+                        SDL_SendKeyboardKey((evt.keypad.bitmaps & bit) ? SDL_PRESSED : SDL_RELEASED, SDL_GetScancodeFromKey(code[cc]));
+                    }
+                }
+                if (cc == MYKEY_R1) {
+                    if (changed & bit) {
+                        lower_speed = (evt.keypad.bitmaps & bit);
+                    }
+                }
             }
         }
 
-        if (MMiyooEventInfo.keypad.bitmaps & (1 << MYKEY_UP)) {
+        if (evt.keypad.bitmaps & (1 << MYKEY_UP)) {
             updated = 1;
-            MMiyooEventInfo.mouse.y-= get_move_interval(1);
+            evt.mouse.y-= get_move_interval(1);
         }
-        if (MMiyooEventInfo.keypad.bitmaps & (1 << MYKEY_DOWN)) {
+        if (evt.keypad.bitmaps & (1 << MYKEY_DOWN)) {
             updated = 1;
-            MMiyooEventInfo.mouse.y+= get_move_interval(1);
+            evt.mouse.y+= get_move_interval(1);
         }
-        if (MMiyooEventInfo.keypad.bitmaps & (1 << MYKEY_LEFT)) {
+        if (evt.keypad.bitmaps & (1 << MYKEY_LEFT)) {
             updated = 1;
-            MMiyooEventInfo.mouse.x-= get_move_interval(0);
+            evt.mouse.x-= get_move_interval(0);
         }
-        if (MMiyooEventInfo.keypad.bitmaps & (1 << MYKEY_RIGHT)) {
+        if (evt.keypad.bitmaps & (1 << MYKEY_RIGHT)) {
             updated = 1;
-            MMiyooEventInfo.mouse.x+= get_move_interval(0);
+            evt.mouse.x+= get_move_interval(0);
         }
         check_mouse_pos();
 
         if(updated){
-            SDL_SendMouseMotion(MMiyooVideoInfo.window, 0, 0, MMiyooEventInfo.mouse.x, MMiyooEventInfo.mouse.y);
+            SDL_SendMouseMotion(vid.window, 0, 0, evt.mouse.x, evt.mouse.y);
         }
-        
-        pre_keypad_bitmaps = MMiyooEventInfo.keypad.bitmaps;
+
+#ifdef TRIMUI
+            if (pre_keypad_bitmaps & (1 << MYKEY_R2)) {
+                set_key(MYKEY_R2, 0);
+            }
+            if (pre_keypad_bitmaps & (1 << MYKEY_L2)) {
+                set_key(MYKEY_L2, 0);
+            }
+#endif
+        pre_keypad_bitmaps = evt.keypad.bitmaps;
     }
     SDL_SemPost(event_sem);
 }

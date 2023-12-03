@@ -25,6 +25,9 @@
 
 #if SDL_VIDEO_RENDER_MMIYOO
 
+#include <unistd.h>
+#include <stdbool.h>
+
 #include "SDL_hints.h"
 #include "../SDL_sysrender.h"
 #include "../../video/mmiyoo/SDL_video_mmiyoo.h"
@@ -55,8 +58,18 @@ struct _NDS_TEXTURE {
     SDL_Texture *texture;
 };
 
-extern MMIYOO_EventInfo MMiyooEventInfo;
+extern GFX gfx;
+extern MMIYOO_EventInfo evt;
+extern SDL_Surface *fps_info;
+extern int FB_W;
+extern int FB_H;
+extern int FB_SIZE;
+extern int TMP_SIZE;
+extern int show_fps;
+extern int down_scale;
 
+int need_reload_bg = 0;
+static int threading_mode = 0;
 static struct _NDS_TEXTURE ntex[MAX_TEXTURE] = {0};
 
 static int update_texture(void *chk, void *new, const void *pixels, int pitch)
@@ -74,7 +87,7 @@ static int update_texture(void *chk, void *new, const void *pixels, int pitch)
     return -1;
 }
 
-static const void* get_pixels(void *chk)
+const void* get_pixels(void *chk)
 {
     int cc = 0;
 
@@ -107,6 +120,7 @@ static int MMIYOO_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture)
     MMIYOO_TextureData *mmiyoo_texture = (MMIYOO_TextureData *)SDL_calloc(1, sizeof(*mmiyoo_texture));
 
     if(!mmiyoo_texture) {
+        printf(PREFIX"failed to create texture\n");
         return SDL_OutOfMemory();
     }
 
@@ -122,7 +136,6 @@ static int MMIYOO_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture)
         mmiyoo_texture->bits = 32;
         break;
     default:
-        printf("%s, invalid format %d\n", __func__, mmiyoo_texture->format);
         return -1;
     }
 
@@ -131,6 +144,7 @@ static int MMIYOO_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture)
     mmiyoo_texture->data = SDL_calloc(1, mmiyoo_texture->size);
 
     if(!mmiyoo_texture->data) {
+        printf(PREFIX"failed to create texture data\n");
         SDL_free(mmiyoo_texture);
         return SDL_OutOfMemory();
     }
@@ -203,26 +217,57 @@ static int MMIYOO_QueueFillRects(SDL_Renderer *renderer, SDL_RenderCommand *cmd,
 
 static int MMIYOO_QueueCopy(SDL_Renderer *renderer, SDL_RenderCommand *cmd, SDL_Texture *texture, const SDL_Rect *srcrect, const SDL_FRect *dstrect)
 {
-    int pitch = 0;
-    SDL_Rect dst = {0};
-    const void *pixels = NULL;
+    int idx = 0;
 
-    float sx = 640.0 / srcrect->w;
-    float sy = 480.0 / srcrect->h;
-    float m = sx < sy ? sx : sy;
+    if ((srcrect->w == 32) && (srcrect->h == 32)) {
+        return 0;
+    }
+
+    if ((evt.mode == MMIYOO_MOUSE_MODE) || (srcrect->w == 800)) {
+        threading_mode = 0;
+        if (srcrect->w == 800) {
+            usleep(100000);
+        }
+        return My_QueueCopy(texture, get_pixels(texture), srcrect, dstrect);
+    }
+    
+    threading_mode = 1;
+    if ((dstrect->w == 160.0) && (dstrect->h == 120.0)){
+        idx = (dstrect->x + dstrect->y) ? 1 : 0;
+    }
+
+    gfx.thread[idx].texture = texture;
+    gfx.thread[idx].srt.x = srcrect->x;
+    gfx.thread[idx].srt.y = srcrect->y;
+    gfx.thread[idx].srt.w = srcrect->w;
+    gfx.thread[idx].srt.h = srcrect->h;
+    gfx.thread[idx].drt.x = dstrect->x;
+    gfx.thread[idx].drt.y = dstrect->y;
+    gfx.thread[idx].drt.w = dstrect->w;
+    gfx.thread[idx].drt.h = dstrect->h;
+    return 0;
+}
+
+int My_QueueCopy(SDL_Texture *texture, const void *pixels, const SDL_Rect *srcrect, const SDL_FRect *dstrect)
+{
+    int pitch = 0;
+    SDL_Rect dst = {dstrect->x, dstrect->y, FB_W, FB_H}; //dstrect->w, dstrect->h};
+    SDL_Rect src = {srcrect->x, srcrect->y, srcrect->w, srcrect->h};
 
     pitch = get_pitch(texture);
-    pixels = get_pixels(texture);
-
     if ((pitch == 0) || (pixels == NULL)) {
         return 0;
     }
 
-    dst.w = m * srcrect->w;
-    dst.h = m * srcrect->h;
-    dst.x = (640 - dst.w) / 2;
-    dst.y = (480 - dst.h) / 2;
-    GFX_Copy(pixels, *srcrect, dst, pitch, 0, E_MI_GFX_ROTATE_180);
+    evt.mouse.minx = dstrect->x;
+    evt.mouse.miny = dstrect->y;
+    evt.mouse.maxx = evt.mouse.minx + dstrect->w;
+    evt.mouse.maxy = evt.mouse.miny + dstrect->h;
+    if (0 && (evt.mode == MMIYOO_MOUSE_MODE)) {
+        draw_pen(pixels, src.w, pitch);
+    }
+
+    GFX_Copy(pixels, src, dst, pitch, 0, E_MI_GFX_ROTATE_180);
     return 0;
 }
 
@@ -244,7 +289,12 @@ static int MMIYOO_RenderReadPixels(SDL_Renderer *renderer, const SDL_Rect *rect,
 
 static void MMIYOO_RenderPresent(SDL_Renderer *renderer)
 {
-    GFX_Flip();
+    if (threading_mode > 0) {
+        gfx.action = GFX_ACTION_FLIP;
+    }
+    else {
+        GFX_Flip();
+    }
 }
 
 static void MMIYOO_DestroyTexture(SDL_Renderer *renderer, SDL_Texture *texture)
@@ -289,12 +339,14 @@ SDL_Renderer *MMIYOO_CreateRenderer(SDL_Window *window, Uint32 flags)
 
     renderer = (SDL_Renderer *) SDL_calloc(1, sizeof(*renderer));
     if(!renderer) {
+        printf(PREFIX"failed to create render\n");
         SDL_OutOfMemory();
         return NULL;
     }
 
     data = (MMIYOO_RenderData *) SDL_calloc(1, sizeof(*data));
     if(!data) {
+        printf(PREFIX"failed to create render data\n");
         MMIYOO_DestroyRenderer(renderer);
         SDL_OutOfMemory();
         return NULL;
