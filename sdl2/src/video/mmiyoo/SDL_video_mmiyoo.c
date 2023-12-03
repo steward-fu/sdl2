@@ -249,17 +249,8 @@ void disp_resize(void)
     uint32_t args[4] = {0, (uintptr_t)&gfx.hw.buf, 1, 0};
 
     ioctl(gfx.fb_dev, FBIO_WAITFORVSYNC, &r);
-    if (nds.dis_mode == NDS_DIS_MODE_S1) {
-        gfx.hw.buf.info.fb.crop.width  = (uint64_t)192 << 32;
-        gfx.hw.buf.info.fb.crop.height = (uint64_t)256 << 32;
-    }
-    else {
-        if (down_scale == 0) {
-            r = BLUR_OFFSET << 1;
-        }
-        gfx.hw.buf.info.fb.crop.width  = (uint64_t)(FB_H - r) << 32;
-        gfx.hw.buf.info.fb.crop.height = (uint64_t)(FB_W - r) << 32;
-    }
+    gfx.hw.buf.info.fb.crop.width  = (uint64_t)240 << 32;
+    gfx.hw.buf.info.fb.crop.height = (uint64_t)320 << 32;
     ioctl(gfx.disp_dev, DISP_LAYER_SET_CONFIG, args);
     ioctl(gfx.fb_dev, FBIO_WAITFORVSYNC, &r);
 }
@@ -462,8 +453,6 @@ int GFX_Copy(const void *pixels, SDL_Rect srcrect, SDL_Rect dstrect, int pitch, 
 #ifdef TRIMUI
     int x = 0;
     int y = 0;
-    int ox = 32;
-    int oy = 24;
     int sw = srcrect.w;
     int sh = srcrect.h;
     uint32_t *dst = NULL;
@@ -478,116 +467,10 @@ int GFX_Copy(const void *pixels, SDL_Rect srcrect, SDL_Rect dstrect, int pitch, 
         return -1;
     }
 
-    if (nds.dis_mode == NDS_DIS_MODE_S1) {
-        ox = 0;
-        oy = 0;
-    }
-    else {
-        if (down_scale == 0) {
-            ox = 16;
-            oy = 8;
-        }
-    }
-
-    if((srcrect.w == 256) && (srcrect.h == 192)) {
-        if (nds.dis_mode == NDS_DIS_MODE_S0) {
-            if (down_scale) {
-                dst = gfx.fb.flip ? LUT_256x192_S01_pixel : LUT_256x192_S00_pixel;
-            }
-            else {
-                dst = gfx.fb.flip ? LUT_256x192_S01_blur : LUT_256x192_S00_blur;
-            }
-        }
-        else {
-            dst = gfx.fb.flip ? LUT_256x192_S11 : LUT_256x192_S10;
-        }
-
-        asm volatile (
-            "1:  vldmia %0!, {q0-q7}   ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s0, [r8]         ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s1, [r8]         ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s2, [r8]         ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s3, [r8]         ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s4, [r8]         ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s5, [r8]         ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s6, [r8]         ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s7, [r8]         ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s8, [r8]         ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s9, [r8]         ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s10, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s11, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s12, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s13, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s14, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s15, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s16, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s17, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s18, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s19, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s20, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s21, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s22, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s23, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s24, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s25, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s26, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s27, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s28, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s29, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s30, [r8]        ;"
-            "    ldr r8, [%1], #4      ;"
-            "    vstr s31, [r8]        ;"
-            "    subs %2, #1            ;"
-            "    bne 1b                 ;"
-            :
-            : "r"(src), "r"(dst), "r"(8 * 192)
-            : "r8", "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7", "memory", "cc"
-        );
-    }
-    else {
-        if ((srcrect.w >= 320) || (srcrect.h >= 240)) {
-            ox = 0;
-            oy = 0;
-            sw = FB_W;
-            sh = FB_H;
-        }
-
-        dst = (uint32_t *)gfx.hw.ion.vadd + (FB_W * FB_H * gfx.fb.flip);
-        for (y = 0; y < sh; y++) {
-            for (x = 0; x < sw; x++) {
-                dst[((((sw - 1) - x) + ox) * FB_H) + y + oy] = *src++;
-            }
+    dst = (uint32_t *)gfx.hw.ion.vadd + (FB_W * FB_H * gfx.fb.flip);
+    for (y = 0; y < sh; y++) {
+        for (x = 0; x < sw; x++) {
+            dst[(((sw - 1) - x) * FB_H) + y] = *src++;
         }
     }
     return 0;
