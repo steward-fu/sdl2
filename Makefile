@@ -60,8 +60,8 @@ config:
 
 .PHONY: clean
 clean:
-	rm -rf example/launch.sh
-	rm -rf example/config.json
+	cd example && rm -rf test launch.sh config.json
+	cd example/libs && rm -rf libEGL.so libGLESv2.so libSDL2-2.0.so.0
 	rm -rf swiftshader/build
 	mkdir -p swiftshader/build
 	make -C sdl2 distclean
