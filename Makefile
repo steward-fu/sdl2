@@ -46,11 +46,12 @@ sdl2:
 gpu:
 	cd swiftshader/build && make -j4
 
-.PHONY: demo
-demo:
-	cp swiftshader/build/*.so $(MOD)/demo/libs/
-	cp sdl2/build/.libs/libSDL2-2.0.so.0 $(MOD)/demo/libs/
-	$(CC) $(MOD)/demo/main.c -I/opt/mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2 -lSDL2 -o $(MOD)/demo/demo
+.PHONY: example
+example:
+	cp assets/$(MOD)/* example/
+	cp swiftshader/build/*.so example/libs/
+	cp sdl2/build/.libs/libSDL2-2.0.so.0 example/libs/
+	$(CC) example/main.c -I/opt/mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2 -lSDL2 -lSDL2_mixer -lSDL2_image -lSDL2_gfx -lSDL2_ttf -o example/test
 
 .PHONY: config
 config:
@@ -59,9 +60,8 @@ config:
 
 .PHONY: clean
 clean:
-	rm -rf mmiyoo/demo/demo trimui/demo/demo
-	rm -rf mmiyoo/demo/libs trimui/demo/libs
+	rm -rf example/launch.sh
+	rm -rf example/config.json
 	rm -rf swiftshader/build
-	mkdir -p mmiyoo/demo/libs trimui/demo/libs
 	mkdir -p swiftshader/build
 	make -C sdl2 distclean
