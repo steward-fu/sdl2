@@ -62,6 +62,4 @@ config:
 clean:
 	cd example && rm -rf test launch.sh config.json
 	cd example/libs && rm -rf libEGL.so libGLESv2.so libSDL2-2.0.so.0
-	rm -rf swiftshader/build
-	mkdir -p swiftshader/build
 	make -C sdl2 distclean
