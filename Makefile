@@ -36,11 +36,11 @@ REL_VER  = $(shell git rev-parse HEAD | cut -c 1-8)
 .PHONY: all
 all:
 	cd swiftshader/build && make -j4
-	make -C sdl2
+	make -C sdl2 -j4
 
 .PHONY: sdl2
 sdl2:
-	make -C sdl2
+	make -C sdl2 -j4
 
 .PHONY: gpu
 gpu:

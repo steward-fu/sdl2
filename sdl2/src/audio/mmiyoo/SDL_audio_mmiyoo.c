@@ -34,14 +34,16 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <linux/soundcard.h>
 
 #include "SDL_timer.h"
 #include "SDL_audio.h"
 #include "SDL_audio_mmiyoo.h"
+
 #include "../SDL_audio_c.h"
 #include "../SDL_audiodev_c.h"
 
-#if defined(MMIYOO)
+#ifdef MMIYOO
 #include "mi_sys.h"
 #include "mi_common_datatype.h"
 #include "mi_ao.h"
@@ -52,23 +54,39 @@ static MI_AO_CHN AoChn = 0;
 static MI_AUDIO_DEV AoDevId = 0;
 #endif
 
+#ifdef TRIMUI
+static int dsp_fd = -1;
+#endif
+
 static void MMIYOO_CloseDevice(_THIS)
 {
     SDL_free(this->hidden->mixbuf);
     SDL_free(this->hidden);
-#if defined(MMIYOO)
+
+#ifdef MMIYOO
     MI_AO_DisableChn(AoDevId, AoChn);
     MI_AO_Disable(AoDevId);
+#endif
+
+#ifdef TRIMUI
+    if (dsp_fd > 0) {
+        close(dsp_fd);
+        dsp_fd = -1;
+    }
 #endif
 }
 
 static int MMIYOO_OpenDevice(_THIS, void *handle, const char *devname, int iscapture)
 {
-#if defined(MMIYOO)
+#ifdef MMIYOO
     MI_S32 miret = 0;
     MI_S32 s32SetVolumeDb = 0;
     MI_S32 s32GetVolumeDb = 0;
     MI_SYS_ChnPort_t stAoChn0OutputPort0;
+#endif
+
+#ifdef TRIMUI
+    int arg = 0;
 #endif
 
     this->hidden = (struct SDL_PrivateAudioData *)SDL_malloc((sizeof * this->hidden));
@@ -83,7 +101,7 @@ static int MMIYOO_OpenDevice(_THIS, void *handle, const char *devname, int iscap
         return SDL_OutOfMemory();
     }
 
-#if defined(MMIYOO)
+#ifdef MMIYOO
     stSetAttr.eBitwidth = E_MI_AUDIO_BIT_WIDTH_16;
     stSetAttr.eWorkmode = E_MI_AUDIO_MODE_I2S_MASTER;
     stSetAttr.u32FrmNum = 6;
@@ -91,30 +109,30 @@ static int MMIYOO_OpenDevice(_THIS, void *handle, const char *devname, int iscap
     stSetAttr.u32ChnCnt = this->spec.channels;
     stSetAttr.eSoundmode = this->spec.channels == 2 ? E_MI_AUDIO_SOUND_MODE_STEREO : E_MI_AUDIO_SOUND_MODE_MONO;
     stSetAttr.eSamplerate = (MI_AUDIO_SampleRate_e)this->spec.freq;
-    printf("%s, freq:%d, sample:%d, channels:%d\n", __func__, this->spec.freq, this->spec.samples, this->spec.channels);
+    printf(PREFIX"Freq:%d, Sample:%d, Channels:%d\n", this->spec.freq, this->spec.samples, this->spec.channels);
     miret = MI_AO_SetPubAttr(AoDevId, &stSetAttr);
     if(miret != MI_SUCCESS) {
-        printf("%s, failed to set PubAttr\n", __func__);
+        printf(PREFIX"failed to set PubAttr\n");
         return -1;
     }
     miret = MI_AO_GetPubAttr(AoDevId, &stGetAttr);
     if(miret != MI_SUCCESS) {
-        printf("%s, failed to get PubAttr\n", __func__);
+        printf(PREFIX"failed to get PubAttr\n");
         return -1;
     }
     miret = MI_AO_Enable(AoDevId);
     if(miret != MI_SUCCESS) {
-        printf("%s, failed to enable AO\n", __func__);
+        printf(PREFIX"failed to enable AO\n");
         return -1;
     }
     miret = MI_AO_EnableChn(AoDevId, AoChn);
     if(miret != MI_SUCCESS) {
-        printf("%s, failed to enable Channel\n", __func__);
+        printf(PREFIX"failed to enable Channel\n");
         return -1;
     }
     miret = MI_AO_SetVolume(AoDevId, s32SetVolumeDb);
     if(miret != MI_SUCCESS) {
-        printf("%s, failed to set Volume\n", __func__);
+        printf(PREFIX"failed to set Volume\n");
         return -1;
     }
     MI_AO_GetVolume(AoDevId, &s32GetVolumeDb);
@@ -124,12 +142,28 @@ static int MMIYOO_OpenDevice(_THIS, void *handle, const char *devname, int iscap
     stAoChn0OutputPort0.u32PortId = 0;
     MI_SYS_SetChnOutputPortDepth(&stAoChn0OutputPort0, 12, 13);
 #endif
+
+#ifdef TRIMUI
+    dsp_fd = open("/dev/dsp", O_RDWR);
+    if (dsp_fd < 0) {
+        return -1;
+    }
+
+    arg = 16;
+    ioctl(dsp_fd, SOUND_PCM_WRITE_BITS, &arg);
+
+    arg = CHANNELS;
+    ioctl(dsp_fd, SOUND_PCM_WRITE_CHANNELS, &arg);
+
+    arg = FREQ;
+    ioctl(dsp_fd, SOUND_PCM_WRITE_RATE, &arg);
+#endif
     return 0;
 }
 
 static void MMIYOO_PlayDevice(_THIS)
 {
-#if defined(MMIYOO)
+#ifdef MMIYOO
     MI_AUDIO_Frame_t aoTestFrame;
 
     aoTestFrame.eBitwidth = stGetAttr.eBitwidth;
@@ -140,9 +174,13 @@ static void MMIYOO_PlayDevice(_THIS)
     MI_AO_SendFrame(AoDevId, AoChn, &aoTestFrame, 1);
     usleep(((stSetAttr.u32PtNumPerFrm * 1000) / stSetAttr.eSamplerate - 10) * 1000);
 #endif
+
+#ifdef TRIMUI
+    write(dsp_fd, this->hidden->mixbuf, this->hidden->mixlen);
+#endif
 }
 
-static Uint8 *MMIYOO_GetDeviceBuf(_THIS)
+static uint8_t *MMIYOO_GetDeviceBuf(_THIS)
 {
     return (this->hidden->mixbuf);
 }

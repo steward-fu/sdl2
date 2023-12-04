@@ -32,15 +32,17 @@
 #define _THIS SDL_AudioDevice *this
 
 #define MMIYOO_DRIVER_NAME          "mmiyoo"
+#define PREFIX                      "[SND] "
 #define MI_AUDIO_SAMPLE_PER_FRAME   768
+#define FUDGE_TICKS                 10
+#define FREQ                        44100
+#define CHANNELS                    2
 
 struct SDL_PrivateAudioData {
     int audio_fd;
-    Uint8 *mixbuf;
+    uint8_t *mixbuf;
     int mixlen;
 };
-
-#define FUDGE_TICKS 10
 
 #endif
 
