@@ -41,7 +41,7 @@ $ sudo docker run -it --rm -v $(pwd):/sdl2_miyoo mmiyoo /bin/bash
 
 #### How to build the SDL2 library only
 ```
-$ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
+$ sudo docker run -it --rm -v $(pwd):/sdl2_miyoo mmiyoo /bin/bash
 # cd /sdl2_miyoo
 # make clean
 # make config
@@ -50,7 +50,7 @@ $ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
 
 #### How to build the virtual GPU (swiftshader) library only
 ```
-$ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
+$ sudo docker run -it --rm -v $(pwd):/sdl2_miyoo mmiyoo /bin/bash
 # cd /sdl2_miyoo
 # rm -rf swiftshader/build/*
 # make clean
@@ -60,7 +60,7 @@ $ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
 
 #### How to build the example
 ```
-$ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
+$ sudo docker run -it --rm -v $(pwd):/sdl2_miyoo mmiyoo /bin/bash
 # make example
 ```
 
@@ -87,26 +87,26 @@ $ sudo docker build -t mmiyoo .
 
 #### How to build all libraries (SDL2 and virtual GPU)
 ```
-$ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
+$ sudo docker run -it --rm -v $(pwd):/sdl2_miyoo mmiyoo /bin/bash
 $ make config MOD=trimui
 $ make
 ```
 
 #### How to build the SDL2 library only
 ```
-$ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
+$ sudo docker run -it --rm -v $(pwd):/sdl2_miyoo mmiyoo /bin/bash
 $ make sdl2
 ```
 
 #### How to build the virtual GPU (swiftshader) library only
 ```
-$ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
+$ sudo docker run -it --rm -v $(pwd):/sdl2_miyoo mmiyoo /bin/bash
 $ make gpu
 ```
 
 #### How to build the example
 ```
-$ sudo docker run -it --rm -v $(pwd):/nds_miyoo mmiyoo /bin/bash
+$ sudo docker run -it --rm -v $(pwd):/sdl2_miyoo mmiyoo /bin/bash
 $ make example MOD=trimui
 ```
 
