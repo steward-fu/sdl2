@@ -51,10 +51,10 @@ example:
 	cp assets/$(MOD)/* example/
 	cp swiftshader/build/*.so example/libs/
 	cp sdl2/build/.libs/libSDL2-2.0.so.0 example/libs/
-	$(CC) example/main.c -I/opt/mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2 -lSDL2 -lSDL2_mixer -lSDL2_image -lSDL2_gfx -lSDL2_ttf -o example/test
+	$(CC) example/main.c -I/opt/mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2 -lSDL2 -lSDL2_mixer -lSDL2_image -lSDL2_gfx -lSDL2_ttf -lGLESv2 -o example/test
 
-.PHONY: config
-config:
+.PHONY: cfg
+cfg:
 	cd sdl2 && ./autogen.sh && MOD=$(MOD) ./configure ${SDL2_CFG} --host=${HOST}
 	cd swiftshader/build && /opt/mmiyoo/bin/cmake -DARCH=arm --host=/opt/mmiyoo/share/buildroot/toolchainfile.cmake ..
 
