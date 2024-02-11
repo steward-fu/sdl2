@@ -240,11 +240,20 @@ fi
 
 AC_MSG_CHECKING(for linker option --no-undefined)
 have_no_undefined=no
+
+case "$MOD" in
+    *unittest*)
+        old_host="$host"
+        host=unittest
+    ;;
+esac
+
 case "$host" in
     dnl Skip this on platforms where it is just simply busted.
     *-*-openbsd*)
         ;;
-
+    *unittest*)
+        ;;
     *)
         save_LDFLAGS="$LDFLAGS"
         LDFLAGS="$LDFLAGS -Wl,--no-undefined"
@@ -254,6 +263,12 @@ case "$host" in
         ],[])
         LDFLAGS="$save_LDFLAGS"
         ;;
+esac
+
+case "$MOD" in
+    *unittest*)
+        host="$old_host"
+    ;;
 esac
 AC_MSG_RESULT($have_no_undefined)
 
@@ -2409,6 +2424,58 @@ CheckTrimuiVideo()
     fi
 }
 
+CheckFunkeysVideo()
+{
+    if test x$enable_video = xyes; then
+        AC_DEFINE(SDL_VIDEO_DRIVER_MMIYOO, 1, [ ])
+        AC_DEFINE(SDL_VIDEO_RENDER_MMIYOO, 1, [ ])
+        SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
+        have_video=yes
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DFUNKEYS -fPIC -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3 -I../funkeys/inc -I/opt/mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L. -lEGL -lGLESv2"
+        SUMMARY_video="${SUMMARY_video} mmiyoo"
+    fi
+}
+
+CheckPandoraVideo()
+{
+    if test x$enable_video = xyes; then
+        AC_DEFINE(SDL_VIDEO_DRIVER_MMIYOO, 1, [ ])
+        AC_DEFINE(SDL_VIDEO_RENDER_MMIYOO, 1, [ ])
+        SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
+        have_video=yes
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DPANDORA -fPIC -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon -ffast-math -O3 -I/usr/local/include/SDL2"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L. -lEGL -lGLESv2"
+        SUMMARY_video="${SUMMARY_video} mmiyoo"
+    fi
+}
+
+CheckQX1000Video()
+{
+    if test x$enable_video = xyes; then
+        AC_DEFINE(SDL_VIDEO_DRIVER_MMIYOO, 1, [ ])
+        AC_DEFINE(SDL_VIDEO_RENDER_MMIYOO, 1, [ ])
+        SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
+        have_video=yes
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DQX1000 -fPIC -mcpu=cortex-a53 -mtune=cortex-a53 -mfpu=neon -O3 -I/usr/local/include/SDL2"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -L. -lEGL -lGLESv2"
+        SUMMARY_video="${SUMMARY_video} mmiyoo"
+    fi
+}
+
+CheckUnittestVideo()
+{
+    if test x$enable_video = xyes; then
+        AC_DEFINE(SDL_VIDEO_DRIVER_MMIYOO, 1, [ ])
+        AC_DEFINE(SDL_VIDEO_RENDER_MMIYOO, 1, [ ])
+        SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
+        have_video=yes
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DUNITTEST -DMMIYOO -fPIC -I../mmiyoo/inc -I/opt/mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2 -I../unittest/extras/fixture/src -I../unittest/src -I../unittest/extras/memory/src"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L. -lEGL -lGLESv2"
+        SUMMARY_video="${SUMMARY_video} mmiyoo"
+    fi
+}
+
 CheckMMiyooAudio()
 {
     if test x$enable_audio = xyes; then
@@ -2433,6 +2500,59 @@ CheckTrimuiAudio()
             EXTRA_CFLAGS="$EXTRA_CFLAGS -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3"
             EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
         fi
+        SUMMARY_audio="${SUMMARY_audio} mmiyoo"
+    fi
+}
+
+CheckFunkeysAudio()
+{
+    if test x$enable_audio = xyes; then
+        AC_DEFINE(SDL_AUDIO_DRIVER_MMIYOO, 1, [ ])
+        SOURCES="$SOURCES $srcdir/src/audio/mmiyoo/*.c"
+        have_audio=yes
+        if test x$HOST = xarm-linux; then
+            EXTRA_CFLAGS="$EXTRA_CFLAGS -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
+        fi
+        SUMMARY_audio="${SUMMARY_audio} mmiyoo"
+    fi
+}
+
+CheckPandoraAudio()
+{
+    if test x$enable_audio = xyes; then
+        AC_DEFINE(SDL_AUDIO_DRIVER_MMIYOO, 1, [ ])
+        SOURCES="$SOURCES $srcdir/src/audio/mmiyoo/*.c"
+        have_audio=yes
+        if test x$HOST = xarm-linux; then
+            EXTRA_CFLAGS="$EXTRA_CFLAGS -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon -O3"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
+        fi
+        SUMMARY_audio="${SUMMARY_audio} mmiyoo"
+    fi
+}
+
+CheckQX1000Audio()
+{
+    if test x$enable_audio = xyes; then
+        AC_DEFINE(SDL_AUDIO_DRIVER_MMIYOO, 1, [ ])
+        SOURCES="$SOURCES $srcdir/src/audio/mmiyoo/*.c"
+        have_audio=yes
+        if test x$HOST = xarm-linux; then
+            EXTRA_CFLAGS="$EXTRA_CFLAGS -mcpu=cortex-a53 -mtune=cortex-a53 -mfpu=neon -O3"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
+        fi
+        SUMMARY_audio="${SUMMARY_audio} mmiyoo"
+    fi
+}
+
+CheckUnittestAudio()
+{
+    if test x$enable_audio = xyes; then
+        AC_DEFINE(SDL_AUDIO_DRIVER_MMIYOO, 1, [ ])
+        SOURCES="$SOURCES $srcdir/src/audio/mmiyoo/*.c"
+        have_audio=yes
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
         SUMMARY_audio="${SUMMARY_audio} mmiyoo"
     fi
 }
@@ -3727,9 +3847,28 @@ case "$host" in
             *trimui*)           ARCH=trimui
                 CheckTrimuiVideo
                 ;;
+            *funkeys*)          ARCH=funkeys
+                CheckFunkeysVideo
+                ;;
+            *pandora*)          ARCH=pandora
+                CheckPandoraVideo
+                ;;
+            *qx1000*)           ARCH=qx1000
+                CheckQX1000Video
+                ;;
+            *unittest*)         ARCH=unittest
+                CheckUnittestVideo
+                ;;
         esac
 
-        CheckVisibilityHidden
+        case "$MOD" in
+            *unittest*)
+                ;;
+            *)
+                CheckVisibilityHidden
+                ;;
+        esac
+
         CheckDeclarationAfterStatement
         CheckDummyVideo
         CheckOffscreenVideo
@@ -3839,6 +3978,18 @@ case "$host" in
             trimui)
                 CheckTrimuiAudio
             ;;
+            funkeys)
+                CheckFunkeysAudio
+            ;;
+            pandora)
+                CheckPandoraAudio
+            ;;
+            qx1000)
+                CheckQX1000Audio
+            ;;
+            unittest)
+                CheckUnittestAudio
+            ;;
           esac
         fi
         # Set up files for the joystick library
@@ -3864,12 +4015,7 @@ case "$host" in
                 SOURCES="$SOURCES $srcdir/src/joystick/steam/*.c"
                 have_joystick=yes
             ;;
-            mmiyoo)
-                AC_DEFINE(SDL_JOYSTICK_MMIYOO, 1, [ ])
-                SOURCES="$SOURCES $srcdir/src/joystick/mmiyoo/*.c"
-                have_joystick=yes
-            ;;
-            trimui)
+            mmiyoo|trimui|funkeys|pandora|unittest)
                 AC_DEFINE(SDL_JOYSTICK_MMIYOO, 1, [ ])
                 SOURCES="$SOURCES $srcdir/src/joystick/mmiyoo/*.c"
                 have_joystick=yes

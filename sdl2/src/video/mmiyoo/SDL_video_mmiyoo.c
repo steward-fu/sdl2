@@ -86,25 +86,360 @@ static uint32_t LUT_256x192_S00_blur[256 * 192] = {0};
 static uint32_t LUT_256x192_S01_blur[256 * 192] = {0};
 #endif
 
+#ifdef QX1000
+static struct _wayland wl = {0};
+
+int thread_run = 0;
+static pthread_t thread_id[2] = {0};
+
+EGLint egl_attribs[] = {
+    EGL_SURFACE_TYPE,
+    EGL_WINDOW_BIT,
+    EGL_RENDERABLE_TYPE,
+    EGL_OPENGL_ES2_BIT,
+    EGL_RED_SIZE,
+    8,
+    EGL_GREEN_SIZE,
+    8,
+    EGL_BLUE_SIZE,
+    8,
+    EGL_NONE
+};
+
+EGLint ctx_attribs[] = {
+    EGL_CONTEXT_CLIENT_VERSION, 
+    2, 
+    EGL_NONE
+};
+
+GLfloat egl_bg_vertices[] = {
+    -1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 
+    -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+     1.0f, -1.0f, 0.0f, 1.0f, 1.0f, 
+     1.0f,  1.0f, 0.0f, 1.0f, 0.0f
+};
+
+GLfloat egl_fb_vertices[] = {
+    -0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 
+    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
+     0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 
+     0.5f,  0.5f, 0.0f, 1.0f, 0.0f
+};
+
+GLushort egl_indices[] = {0, 1, 2, 0, 2, 3};
+
+const char *vShaderSrc =
+    "attribute vec4 a_position;   \n"
+    "attribute vec2 a_texCoord;   \n"
+    "varying vec2 v_texCoord;     \n"
+    "void main()                  \n"
+    "{                            \n"
+    "   gl_Position = a_position; \n"
+    "   v_texCoord = a_texCoord;  \n"
+    "}                            \n";
+
+const char *fShaderSrc =
+    "#ifdef GL_ES                                              \n"
+    "precision mediump float;                                  \n"
+    "#endif                                                    \n"
+    "varying vec2 v_texCoord;                                  \n"
+    "uniform float angle;                                      \n"
+    "uniform float aspect;                                     \n"
+    "uniform sampler2D s_texture;                              \n"
+    "const vec2 HALF = vec2(0.5);                              \n"
+    "void main()                                               \n"
+    "{                                                         \n"
+    "    float aSin = sin(angle);                              \n"
+    "    float aCos = cos(angle);                              \n"
+    "    vec2 tc = v_texCoord;                                 \n"
+    "    mat2 rotMat = mat2(aCos, -aSin, aSin, aCos);          \n"
+    "    mat2 scaleMat = mat2(aspect, 0.0, 0.0, 1.0);          \n"
+    "    mat2 scaleMatInv = mat2(1.0 / aspect, 0.0, 0.0, 1.0); \n"
+    "    tc -= HALF.xy;                                        \n"
+    "    tc = scaleMatInv * rotMat * scaleMat * tc;            \n"
+    "    tc += HALF.xy;                                        \n"
+    "    vec3 tex = texture2D(s_texture, tc).bgr;              \n"
+    "    gl_FragColor = vec4(tex, 1.0);                        \n"
+    "}                                                         \n";
+
+static void cb_remove(void *dat, struct wl_registry *reg, uint32_t id);
+static void cb_handle(void *dat, struct wl_registry *reg, uint32_t id, const char *intf, uint32_t ver);
+
+static struct wl_registry_listener cb_global = {
+    .global = cb_handle,
+    .global_remove = cb_remove
+};
+
+void update_wayland_res(int w, int h)
+{
+    int c0 = 0;
+    int c1 = 0;
+    int scale = 0;
+    float x0 = 0;
+    float y0 = 0;
+
+    FB_W = w;
+    FB_H = h;
+    wl.info.w = FB_W;
+    wl.info.h = FB_H;
+    wl.info.bpp = 32;
+    wl.info.size = wl.info.w * (wl.info.bpp / 8) * wl.info.h;
+
+    c0 = LCD_H / wl.info.w;
+    c1 = LCD_W / wl.info.h;
+    scale = c0 > c1 ? c1 : c0;
+
+    y0 = ((float)(wl.info.w * scale) / LCD_H);
+    x0 = ((float)(wl.info.h * scale) / LCD_W);
+
+    egl_fb_vertices[0] = -x0;
+    egl_fb_vertices[1] = y0;
+    egl_fb_vertices[5] = -x0;
+    egl_fb_vertices[6] = -y0;
+    egl_fb_vertices[10] =  x0;
+    egl_fb_vertices[11] = -y0;
+    egl_fb_vertices[15] =  x0;
+    egl_fb_vertices[16] =  y0;
+
+    memset(wl.data, 0, LCD_W * LCD_H * 2);
+    wl.pixels[0] = (uint16_t*)wl.data;
+    wl.pixels[1] = (uint16_t*)(wl.data + wl.info.size);
+    printf(PREFIX"Updated Wayland (width=%d, height=%d, scale=%d)\n", w, h, scale);
+}
+
+static void* wl_thread(void* pParam)
+{
+    while(thread_run){
+        if(wl.init && wl.ready){
+            wl_display_dispatch(wl.display);
+        }
+        usleep(100);
+    }
+    return NULL;
+}
+
+static void cb_ping(void *dat, struct wl_shell_surface *shell_surf, uint32_t serial)
+{
+    wl_shell_surface_pong(shell_surf, serial);
+}
+
+static void cb_configure(void *dat, struct wl_shell_surface *shell_surf, uint32_t edges, int32_t w, int32_t h)
+{
+}
+
+static void cb_popup_done(void *dat, struct wl_shell_surface *shell_surf)
+{
+}
+
+static const struct wl_shell_surface_listener cb_shell_surf = {
+    cb_ping,
+    cb_configure,
+    cb_popup_done
+};
+
+static void cb_handle(void *dat, struct wl_registry *reg, uint32_t id, const char *intf, uint32_t ver)
+{
+    if (strcmp(intf, "wl_compositor") == 0) {
+        wl.compositor = wl_registry_bind(reg, id, &wl_compositor_interface, 1);
+    }
+    else if (strcmp(intf, "wl_shell") == 0) {
+        wl.shell = wl_registry_bind(reg, id, &wl_shell_interface, 1);
+    }
+}
+
+static void cb_remove(void *dat, struct wl_registry *reg, uint32_t id)
+{
+}
+
+void egl_free(void)
+{
+    wl.init = 0;
+    wl.ready = 0;
+    eglDestroySurface(wl.egl.display, wl.egl.surface);
+    eglDestroyContext(wl.egl.display, wl.egl.context);
+    wl_egl_window_destroy(wl.egl.window);
+    eglTerminate(wl.egl.display);
+    glDeleteShader(wl.egl.vShader);
+    glDeleteShader(wl.egl.fShader);
+    glDeleteProgram(wl.egl.pObject);
+}
+
+void wl_free(void)
+{
+    wl.init = 0;
+    wl.ready = 0;
+    wl_shell_surface_destroy(wl.shell_surface);
+    wl_shell_destroy(wl.shell);
+    wl_surface_destroy(wl.surface);
+    wl_compositor_destroy(wl.compositor);
+    wl_registry_destroy(wl.registry);
+    wl_display_disconnect(wl.display);
+    free(wl.data);
+}
+
+void wl_create(void)
+{
+    wl.display = wl_display_connect(NULL);
+    wl.registry = wl_display_get_registry(wl.display);
+
+    wl_registry_add_listener(wl.registry, &cb_global, NULL);
+    wl_display_dispatch(wl.display);
+    wl_display_roundtrip(wl.display);
+
+    wl.surface = wl_compositor_create_surface(wl.compositor);
+    wl.shell_surface = wl_shell_get_shell_surface(wl.shell, wl.surface);
+    wl_shell_surface_set_toplevel(wl.shell_surface);
+    wl_shell_surface_add_listener(wl.shell_surface, &cb_shell_surf, NULL);
+    
+    wl.region = wl_compositor_create_region(wl.compositor);
+    wl_region_add(wl.region, 0, 0, LCD_W, LCD_H);
+    wl_surface_set_opaque_region(wl.surface, wl.region);
+    wl.egl.window = wl_egl_window_create(wl.surface, LCD_W, LCD_H);
+}
+
+void egl_create(void)
+{
+    GLint compiled = 0;
+    EGLConfig cfg = 0;
+    EGLint major = 0, minor = 0, cnt = 0;
+
+    wl.egl.display = eglGetDisplay((EGLNativeDisplayType)wl.display);
+    eglInitialize(wl.egl.display, &major, &minor);
+    eglGetConfigs(wl.egl.display, NULL, 0, &cnt);
+    eglChooseConfig(wl.egl.display, egl_attribs, &cfg, 1, &cnt);
+    wl.egl.surface = eglCreateWindowSurface(wl.egl.display, cfg, wl.egl.window, NULL);
+    wl.egl.context = eglCreateContext(wl.egl.display, cfg, EGL_NO_CONTEXT, ctx_attribs);
+    eglMakeCurrent(wl.egl.display, wl.egl.surface, wl.egl.surface, wl.egl.context);
+
+    wl.egl.vShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(wl.egl.vShader, 1, &vShaderSrc, NULL);
+    glCompileShader(wl.egl.vShader);
+
+    glGetShaderiv(wl.egl.vShader, GL_COMPILE_STATUS, &compiled);
+    if (!compiled) {
+        GLint len = 0;
+        glGetShaderiv(wl.egl.vShader, GL_INFO_LOG_LENGTH, &len);
+        if (len > 1) {
+            char* info = malloc(sizeof(char) * len);
+            glGetShaderInfoLog(wl.egl.vShader, len, NULL, info);
+            printf(PREFIX"Failed to compile vShader: %s\n", info);
+            free(info);
+        }
+    }
+
+    wl.egl.fShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(wl.egl.fShader, 1, &fShaderSrc, NULL);
+    glCompileShader(wl.egl.fShader);
+    
+    glGetShaderiv(wl.egl.fShader, GL_COMPILE_STATUS, &compiled);
+    if (!compiled) {
+        GLint len = 0;
+        glGetShaderiv(wl.egl.fShader, GL_INFO_LOG_LENGTH, &len);
+        if (len > 1) {
+            char* info = malloc(sizeof(char) * len);
+            glGetShaderInfoLog(wl.egl.fShader, len, NULL, info);
+            printf(PREFIX"Failed to compile fShader: %s\n", info);
+            free(info);
+        }
+    }
+
+    wl.egl.pObject = glCreateProgram();
+    glAttachShader(wl.egl.pObject, wl.egl.vShader);
+    glAttachShader(wl.egl.pObject, wl.egl.fShader);
+    glLinkProgram(wl.egl.pObject);
+    glUseProgram(wl.egl.pObject);
+
+    wl.egl.positionLoc = glGetAttribLocation(wl.egl.pObject, "a_position");
+    wl.egl.texCoordLoc = glGetAttribLocation(wl.egl.pObject, "a_texCoord");
+    wl.egl.samplerLoc = glGetUniformLocation(wl.egl.pObject, "s_texture");
+    glUniform1f(glGetUniformLocation(wl.egl.pObject, "angle"), 90 * (3.1415 * 2.0) / 360.0);
+    glUniform1f(glGetUniformLocation(wl.egl.pObject, "aspect"), 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    glGenTextures(1, &wl.egl.textureId);
+    glBindTexture(GL_TEXTURE_2D, wl.egl.textureId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glViewport(0, 0, LCD_W, LCD_H);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glVertexAttribPointer(wl.egl.positionLoc, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), egl_bg_vertices);
+    glVertexAttribPointer(wl.egl.texCoordLoc, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), &egl_bg_vertices[3]);
+    glEnableVertexAttribArray(wl.egl.positionLoc);
+    glEnableVertexAttribArray(wl.egl.texCoordLoc);
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(wl.egl.samplerLoc, 0);
+}
+
+static void* draw_thread(void *pParam)
+{
+    wl_create();
+    egl_create();
+
+    wl.init = 1;
+    while(thread_run){
+        if(wl.ready){
+            glVertexAttribPointer(wl.egl.positionLoc, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), egl_bg_vertices);
+            glVertexAttribPointer(wl.egl.texCoordLoc, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), &egl_bg_vertices[3]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                wl.info.w, wl.info.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, wl.bg);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, egl_indices);
+
+            glVertexAttribPointer(wl.egl.positionLoc, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), egl_fb_vertices);
+            glVertexAttribPointer(wl.egl.texCoordLoc, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), &egl_fb_vertices[3]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                wl.info.w, wl.info.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, wl.pixels[wl.flip ^ 1]);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, egl_indices);
+            eglSwapBuffers(wl.egl.display, wl.egl.surface);
+        }
+        else{
+            usleep(1000);
+        }
+    }
+    return NULL;
+}
+#endif
+
 static void *video_handler(void *threadid)
 {
     while (is_running) {
         if (gfx.action == GFX_ACTION_FLIP) {
             gfx.action = GFX_ACTION_NONE;
-
-#ifdef MMIYOO
-            My_QueueCopy(gfx.thread[0].texture, get_pixels(gfx.thread[0].texture), &gfx.thread[0].srt, &gfx.thread[0].drt);
-#endif
-
-#ifdef TRIMUI
-            My_QueueCopy(gfx.thread[0].texture, get_pixels(gfx.thread[0].texture), &gfx.thread[0].srt, &gfx.thread[0].drt);
-#endif
+            My_QueueCopy(gfx.thread.texture, get_pixels(gfx.thread.texture), &gfx.thread.srt, &gfx.thread.drt);
             GFX_Flip();
         }
         usleep(1);
     }
     pthread_exit(NULL);
 }
+
+#ifdef QX1000
+int fb_init(void)
+{
+    thread_run = 1;
+    wl.bg = SDL_malloc(LCD_W * LCD_H * 2);
+    memset(wl.bg, 0, LCD_W * LCD_H * 2);
+    pthread_create(&thread_id[0], NULL, wl_thread, NULL);
+    pthread_create(&thread_id[1], NULL, draw_thread, NULL);
+    while(wl.init == 0){
+        usleep(100000);
+    }
+
+    wl.flip = 0;
+    wl.ready = 0;
+    wl.data = SDL_malloc(LCD_W * LCD_H * 2);
+    memset(wl.data, 0, LCD_W * LCD_H *2);
+    update_wayland_res(640, 480);
+    wl.ready = 1;
+    return 0;
+}
+
+int fb_quit(void)
+{
+    return 0;
+}
+#endif
 
 #ifdef TRIMUI
 static int ion_alloc(int ion_fd, ion_alloc_info_t* info)
@@ -119,7 +454,7 @@ static int ion_alloc(int ion_fd, ion_alloc_info_t* info)
     iad.heap_id_mask = ION_HEAP_TYPE_DMA_MASK;
     iad.flags = 0;
     if (ioctl(ion_fd, ION_IOC_ALLOC, &iad) < 0) {
-        printf(PREFIX"failed to call ION_IOC_ALLOC\n");
+        printf(PREFIX"Failed to call ION_IOC_ALLOC\n");
         return -1;
     }
 
@@ -127,19 +462,19 @@ static int ion_alloc(int ion_fd, ion_alloc_info_t* info)
     icd.arg = (uintptr_t)&spd;
     spd.handle = iad.handle;
     if (ioctl(ion_fd, ION_IOC_CUSTOM, &icd) < 0) {
-        printf(PREFIX"failed to call ION_IOC_CUSTOM\n");
+        printf(PREFIX"Failed to call ION_IOC_CUSTOM\n");
         return -1;
     }
     ifd.handle = iad.handle;
     if (ioctl(ion_fd, ION_IOC_MAP, &ifd) < 0) {
-        printf(PREFIX"failed to call ION_IOC_MAP\n");
+        printf(PREFIX"Failed to call ION_IOC_MAP\n");
     }
 
     info->handle = iad.handle;
     info->fd = ifd.fd;
     info->padd = (void*)spd.phys_addr;
     info->vadd = mmap(0, info->size, PROT_READ | PROT_WRITE, MAP_SHARED, info->fd, 0);
-    printf(PREFIX"mmap padd: 0x%x vadd: 0x%x size: %d\n", (uintptr_t)info->padd, (uintptr_t)info->vadd, info->size);
+    printf(PREFIX"Mmap padd: 0x%x vadd: 0x%x size: %d\n", (uintptr_t)info->padd, (uintptr_t)info->vadd, info->size);
     return 0;
 }
 
@@ -151,7 +486,7 @@ static void ion_free(int ion_fd, ion_alloc_info_t* info)
     close(info->fd);
     ihd.handle = info->handle;
     if (ioctl(ion_fd, ION_IOC_FREE, &ihd) < 0) {
-        printf(PREFIX"failed to call ION_ION_FREE\n");
+        printf(PREFIX"Failed to call ION_ION_FREE\n");
     }
 }
 
@@ -166,7 +501,7 @@ int fb_init(void)
     gfx.disp_dev = open("/dev/disp", O_RDWR);
 
     if (gfx.fb_dev < 0) {
-        printf(PREFIX"failed to open /dev/fb0\n");
+        printf(PREFIX"Failed to open /dev/fb0\n");
         return -1;
     }
 
@@ -212,7 +547,7 @@ int fb_init(void)
     return 0;
 }
 
-int fb_uninit(void)
+int fb_quit(void)
 {
     uint32_t args[4] = {0, (uintptr_t)&gfx.hw.disp, 1, 0};
 
@@ -282,7 +617,7 @@ int fb_init(void)
     return 0;
 }
 
-int fb_uninit(void)
+int fb_quit(void)
 {
     MI_SYS_Munmap(gfx.fb.virAddr, TMP_SIZE);
     MI_SYS_Munmap(gfx.tmp.virAddr, TMP_SIZE);
@@ -298,8 +633,6 @@ int fb_uninit(void)
 
 void GFX_Init(void)
 {
-    int cc = 0;
-
 #ifdef TRIMUI
     int x = 0;
     int y = 0;
@@ -311,12 +644,8 @@ void GFX_Init(void)
 #endif
 
     fb_init();
-    for (cc=0; cc<MAX_QUEUE; cc++) {
-        gfx.thread[cc].pixels = malloc(TMP_SIZE);
-    }
-
+    gfx.thread.pixels = malloc(TMP_SIZE);
     cvt = SDL_CreateRGBSurface(SDL_SWSURFACE, FB_W, FB_H, 32, 0, 0, 0, 0);
-    printf(PREFIX"surface for convert: %p\n", cvt);
 
 #ifdef TRIMUI
     cc = 0;
@@ -343,19 +672,16 @@ void GFX_Init(void)
 
 void GFX_Quit(void)
 {
-    int cc = 0;
     void *ret = NULL;
 
     is_running = 0;
     pthread_join(thread, &ret);
     GFX_Clear();
 
-    fb_uninit();
-    for (cc=0; cc<MAX_QUEUE; cc++) {
-        if (gfx.thread[cc].pixels) {
-            free(gfx.thread[cc].pixels);
-            gfx.thread[cc].pixels = NULL;
-        }
+    fb_quit();
+    if (gfx.thread.pixels) {
+        free(gfx.thread.pixels);
+        gfx.thread.pixels = NULL;
     }
 
     gfx.vinfo.yoffset = 0;
@@ -450,6 +776,20 @@ int draw_pen(const void *pixels, int width, int pitch)
 
 int GFX_Copy(const void *pixels, SDL_Rect srcrect, SDL_Rect dstrect, int pitch, int alpha, int rotate)
 {
+#ifdef QX1000
+    int x = 0;
+    int y = 0;
+    const uint32_t *src = pixels;
+    uint32_t *dst = (uint32_t *)wl.pixels[wl.flip];
+
+    for (y = 0; y < srcrect.h; y++) {
+        for (x = 0; x < srcrect.w; x++) {
+            *dst++ = *src++;
+        }
+        dst+= (FB_W - srcrect.w);
+    }
+#endif
+
 #ifdef TRIMUI
     int x = 0;
     int y = 0;
@@ -463,7 +803,7 @@ int GFX_Copy(const void *pixels, SDL_Rect srcrect, SDL_Rect dstrect, int pitch, 
     }
 
     if ((pitch / srcrect.w) != 4) {
-        printf(PREFIX"only support 32 bits (%dx%dx%d)\n", srcrect.w, srcrect.h, (pitch / srcrect.w));
+        printf(PREFIX"Only support 32 bits (%dx%dx%d)\n", srcrect.w, srcrect.h, (pitch / srcrect.w));
         return -1;
     }
 
@@ -473,7 +813,6 @@ int GFX_Copy(const void *pixels, SDL_Rect srcrect, SDL_Rect dstrect, int pitch, 
             dst[(((sw - 1) - x) * FB_H) + y] = *src++;
         }
     }
-    return 0;
 #endif
 
 #ifdef MMIYOO
@@ -522,12 +861,17 @@ int GFX_Copy(const void *pixels, SDL_Rect srcrect, SDL_Rect dstrect, int pitch, 
     MI_SYS_FlushInvCache(gfx.tmp.virAddr, pitch * srcrect.h);
     MI_GFX_BitBlit(&gfx.hw.src.surf, &gfx.hw.src.rt, &gfx.hw.dst.surf, &gfx.hw.dst.rt, &gfx.hw.opt, &u16Fence);
     MI_GFX_WaitAllDone(FALSE, u16Fence);
-    return 0;
 #endif
+
+    return 0;
 }
 
 void GFX_Flip(void)
 {
+#ifdef QX1000
+    wl.flip ^= 1;
+#endif
+
 #ifdef MMIYOO
     ioctl(gfx.fb_dev, FBIOPAN_DISPLAY, &gfx.vinfo);
     gfx.vinfo.yoffset ^= FB_H;
@@ -566,8 +910,11 @@ int MMIYOO_CreateWindow(_THIS, SDL_Window *window)
 {
     SDL_SetMouseFocus(window);
     vid.window = window;
-    printf(PREFIX"w:%d, h:%d\n", window->w, window->h);
-    //eglUpdateBufferSettings(fb_flip, &fb_idx, fb_vaddr);
+#ifdef QX1000
+    update_wayland_res(window->w, window->h);
+    glUpdateBufferSettings(GFX_Flip, &wl.flip, wl.pixels[0], wl.pixels[1]);
+#endif
+    printf(PREFIX"Window %p (width:%d, height:%d)\n", window, window->w, window->h);
     return 0;
 }
 
@@ -578,8 +925,8 @@ int MMIYOO_CreateWindowFrom(_THIS, SDL_Window *window, const void *data)
 
 static SDL_VideoDevice *MMIYOO_CreateDevice(int devindex)
 {
-    SDL_VideoDevice *device=NULL;
-    SDL_GLDriverData *gldata=NULL;
+    SDL_VideoDevice *device = NULL;
+    SDL_GLDriverData *gldata = NULL;
 
     if(!MMIYOO_Available()) {
         return (0);
@@ -636,6 +983,7 @@ int MMIYOO_VideoInit(_THIS)
     SDL_DisplayMode mode = {0};
     SDL_VideoDisplay display = {0};
 
+    printf(PREFIX"%s\n", __func__);
     SDL_zero(mode);
     mode.format = SDL_PIXELFORMAT_RGB565;
     mode.w = 640;
@@ -704,7 +1052,6 @@ int MMIYOO_VideoInit(_THIS)
     mode.h = 272;
     mode.refresh_rate = 60;
     SDL_AddDisplayMode(&display, &mode);
-
     SDL_AddVideoDisplay(&display, SDL_FALSE);
 
     FB_W = DEF_FB_W;
@@ -738,7 +1085,7 @@ static int MMIYOO_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMo
 
 void MMIYOO_VideoQuit(_THIS)
 {
-    printf(PREFIX"MMIYOO_VideoQuit\n");
+    printf(PREFIX"%s\n", __func__);
     MMIYOO_EventDeinit();
 }
 

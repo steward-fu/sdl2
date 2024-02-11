@@ -49,13 +49,25 @@
 #include "SDL_opengles_mmiyoo.h"
 
 #ifdef MMIYOO
-    #include "mi_sys.h"
-    #include "mi_gfx.h"
+#include "mi_sys.h"
+#include "mi_gfx.h"
 #endif
 
 #ifdef TRIMUI
-    #include "trimui.h"
+#include "trimui.h"
+#endif
+
+#ifdef QX1000
+#include <wayland-client.h>
+#include <wayland-egl.h>
+#include <EGL/egl.h>
+#include <GLES2/gl2.h>
+#endif
+
+#ifndef MMIYOO
+    #define E_MI_GFX_ROTATE_90  0
     #define E_MI_GFX_ROTATE_180 0
+    #define E_MI_GFX_ROTATE_270 0
 #endif
 
 #ifndef MAX_PATH
@@ -74,19 +86,65 @@
     #define ION_H                   384
 #endif
 
+#ifdef QX1000
+    #define LCD_W                   1080
+    #define LCD_H                   2160
+    #define DEF_FB_W                640
+    #define DEF_FB_H                480
+    #define FB_BPP                  4
+#endif
+
 #define PREFIX                      "[SDL] "
 #define MMIYOO_DRIVER_NAME          "mmiyoo"
 #define FB_BPP                      4
 #define IMG_W                       640
 #define IMG_H                       480
-#define MAX_QUEUE                   2
 #define GFX_ACTION_NONE             0
 #define GFX_ACTION_FLIP             1
 #define GFX_ACTION_COPY0            2
 #define GFX_ACTION_COPY1            3
 
-#ifdef TRIMUI
-    #define BLUR_OFFSET                 16
+#ifdef QX1000
+    struct _wayland {
+        struct wl_shell *shell;
+        struct wl_region *region;
+        struct wl_display *display;
+        struct wl_surface *surface;
+        struct wl_registry *registry;
+        struct wl_compositor *compositor;
+        struct wl_shell_surface *shell_surface;
+
+        struct _egl {
+            EGLConfig config;
+            EGLContext context;
+            EGLDisplay display;
+            EGLSurface surface;
+
+            GLuint vShader;
+            GLuint fShader;
+            GLuint pObject;
+
+            GLuint textureId;
+            GLint positionLoc;
+            GLint texCoordLoc;
+            GLint samplerLoc;
+            struct wl_egl_window *window;
+        } egl;
+        
+        struct _org {
+            int w;
+            int h;
+            int bpp;
+            int size;
+        } info;
+
+        int init;
+        int ready;
+        int flip;
+        uint8_t *bg;
+        uint8_t *data;
+        uint16_t *pixels[2];
+    };
 #endif
 
 typedef struct MMIYOO_VideoInfo {
@@ -139,7 +197,7 @@ typedef struct _GFX {
         SDL_Rect srt;
         SDL_FRect drt;
         SDL_Texture *texture;
-    } thread[MAX_QUEUE];
+    } thread;
 } GFX;
 
 void GFX_Clear(void);

@@ -27,9 +27,9 @@
 
 #include "../../SDL_internal.h"
 
-extern int MMIYOO_CreateWindowFramebuffer(_THIS, SDL_Window *window, Uint32 *format, void **pixels, int *pitch);
-extern int MMIYOO_UpdateWindowFramebuffer(_THIS, SDL_Window *window, const SDL_Rect *rects, int numrects);
-extern void MMIYOO_DestroyWindowFramebuffer(_THIS, SDL_Window *window);
+int MMIYOO_CreateWindowFramebuffer(_THIS, SDL_Window *window, Uint32 *format, void **pixels, int *pitch);
+int MMIYOO_UpdateWindowFramebuffer(_THIS, SDL_Window *window, const SDL_Rect *rects, int numrects);
+void MMIYOO_DestroyWindowFramebuffer(_THIS, SDL_Window *window);
 
 #endif
 

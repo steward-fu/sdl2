@@ -28,13 +28,13 @@
 #include "SDL_video_mmiyoo.h"
 #include "SDL_opengles_mmiyoo.h"
 
-static EGLDisplay display=0;
-static EGLContext context=0;
-static EGLSurface surface=0;
-static EGLConfig config=0;
-static void *ppFunc=NULL;
-static void *pfb_idx=NULL;
-static void *pfb_vaddr=NULL;
+static EGLDisplay display = 0;
+static EGLContext context = 0;
+static EGLSurface surface = 0;
+static EGLConfig config = 0;
+static void *fb_cb = NULL;
+static void *fb_flip = NULL;
+static unsigned long fb_vaddr[2] = {0};
 
 EGLBoolean eglUpdateBufferSettings(EGLDisplay display, EGLSurface surface, void *pFunc, void *fb_idx, void *fb_vaddr);
 
@@ -55,13 +55,13 @@ void glUnloadLibrary(_THIS)
 
 SDL_GLContext glCreateContext(_THIS, SDL_Window *window)
 {
-    EGLint i=0;
-    EGLint val=0;
-    EGLBoolean rc=0;
-    EGLConfig *cfgs=NULL;
-    EGLint numConfigs=0;
-    EGLint majorVersion=0;
-    EGLint minorVersion=0;
+    EGLint i = 0;
+    EGLint val = 0;
+    EGLBoolean rc = 0;
+    EGLConfig *cfgs = NULL;
+    EGLint numConfigs = 0;
+    EGLint majorVersion = 0;
+    EGLint minorVersion = 0;
     struct {
         EGLint client_version[2];
         EGLint none;
@@ -79,60 +79,61 @@ SDL_GLContext glCreateContext(_THIS, SDL_Window *window)
     };
 
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    printf(PREFIX"EGL Display %p\n", display);
     eglInitialize(display, &majorVersion, &minorVersion);
     eglGetConfigs(display, NULL, 0, &numConfigs);
-    printf(PREFIX"sdl2 eglGetConfigs %d\n", numConfigs);
-    
     cfgs = SDL_malloc(numConfigs * sizeof(EGLConfig));
-    if(cfgs == NULL) {
+    if (cfgs == NULL) {
+        printf(PREFIX"Failed to allocate memory for EGL config\n");
         return NULL;
     }
 
     rc = eglGetConfigs(display, cfgs, numConfigs, &numConfigs);
-    if(rc != EGL_TRUE) {
+    if (rc != EGL_TRUE) {
         SDL_free(cfgs);
+        printf(PREFIX"Failed to get EGL config\n");
         return NULL;
     }
 
-    for(i = 0; i < numConfigs; i++) {
+    for (i = 0; i < numConfigs; i++) {
         eglGetConfigAttrib(display, cfgs[i], EGL_SURFACE_TYPE, &val);
-        if(!(val & EGL_WINDOW_BIT)) {
+        if (!(val & EGL_WINDOW_BIT)) {
             continue;
         }
 
         eglGetConfigAttrib(display, cfgs[i], EGL_RENDERABLE_TYPE, &val);
-        if(!(val & EGL_OPENGL_ES2_BIT)) {
+        if (!(val & EGL_OPENGL_ES2_BIT)) {
             continue;
         }
 
         eglGetConfigAttrib(display, cfgs[i], EGL_DEPTH_SIZE, &val);
-        if(val == 0) {
+        if (val == 0) {
             continue;
         }
 
         config = cfgs[i];
-        printf(PREFIX"sdl2 set config %d\n", i);
         break;
     }
     SDL_free(cfgs);
+    printf(PREFIX"EGL Config %p\n", config);
 
-    printf(PREFIX"sdl2 eglCreateContext\n");
     context = eglCreateContext(display, config, EGL_NO_CONTEXT, (EGLint *)&egl_ctx_attr);
-    if(context == EGL_NO_CONTEXT) {
+    if (context == EGL_NO_CONTEXT) {
+        printf(PREFIX"Failed to create EGL context\n");
         return NULL;
     }
 
-    printf(PREFIX"sdl2 eglCreateWindowSurface\n");
     surface = eglCreateWindowSurface(display, config, 0, (EGLint*)&egl_surf_attr);
-    if(surface == EGL_NO_SURFACE) {
+    printf(PREFIX"EGL Surface %p\n", surface);
+    if (surface == EGL_NO_SURFACE) {
+        printf(PREFIX"Failed to create EGL surface\n");
         return NULL;
     }
 
-    printf(PREFIX"sdl2 eglMakeCurrent\n");
+    printf(PREFIX"Passing Buffer Settings (CB %p, vAddr0 0x%lx, vAddr1 0x%lx)\n", fb_cb, fb_vaddr[0], fb_vaddr[1]);
     eglMakeCurrent(display, surface, surface, context);
-    
-    printf(PREFIX"sdl2 %s, %p %p %p\n", __func__, ppFunc, pfb_idx, pfb_vaddr);
-    eglUpdateBufferSettings(display, surface, ppFunc, pfb_idx, pfb_vaddr);
+    eglUpdateBufferSettings(display, surface, fb_cb, fb_flip, fb_vaddr);
+    printf(PREFIX"Prepared EGL successfully\n");
     return context;
 }
 
@@ -141,11 +142,13 @@ int glSetSwapInterval(_THIS, int interval)
     return 0;
 }
 
-int glUpdateBufferSettings(void *pFunc, void *fb_idx, void *fb_vaddr)
+int glUpdateBufferSettings(void *cb, void *flip, void *v0, void *v1)
 {
-    ppFunc = pFunc;
-    pfb_idx = fb_idx;
-    pfb_vaddr = fb_vaddr;
+    fb_cb = cb;
+    fb_flip = flip;
+    fb_vaddr[0] = (unsigned long)v0;
+    fb_vaddr[1] = (unsigned long)v1;
+    printf(PREFIX"Updated Buffer Settings (CB %p, vAddr0 %p, vAddr1 %p)\n", cb, v0, v1);
     return 0;
 }
 

@@ -120,7 +120,7 @@ static int MMIYOO_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture)
     MMIYOO_TextureData *mmiyoo_texture = (MMIYOO_TextureData *)SDL_calloc(1, sizeof(*mmiyoo_texture));
 
     if(!mmiyoo_texture) {
-        printf(PREFIX"failed to create texture\n");
+        printf(PREFIX"Failed to create texture\n");
         return SDL_OutOfMemory();
     }
 
@@ -144,7 +144,7 @@ static int MMIYOO_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture)
     mmiyoo_texture->data = SDL_calloc(1, mmiyoo_texture->size);
 
     if(!mmiyoo_texture->data) {
-        printf(PREFIX"failed to create texture data\n");
+        printf(PREFIX"Failed to create texture data\n");
         SDL_free(mmiyoo_texture);
         return SDL_OutOfMemory();
     }
@@ -217,41 +217,28 @@ static int MMIYOO_QueueFillRects(SDL_Renderer *renderer, SDL_RenderCommand *cmd,
 
 static int MMIYOO_QueueCopy(SDL_Renderer *renderer, SDL_RenderCommand *cmd, SDL_Texture *texture, const SDL_Rect *srcrect, const SDL_FRect *dstrect)
 {
-    int idx = 0;
-
-    if ((srcrect->w == 32) && (srcrect->h == 32)) {
-        return 0;
-    }
-
-    if ((evt.mode == MMIYOO_MOUSE_MODE) || (srcrect->w == 800)) {
+    if (evt.mode == MMIYOO_MOUSE_MODE) {
         threading_mode = 0;
-        if (srcrect->w == 800) {
-            usleep(100000);
-        }
         return My_QueueCopy(texture, get_pixels(texture), srcrect, dstrect);
     }
     
     threading_mode = 1;
-    if ((dstrect->w == 160.0) && (dstrect->h == 120.0)){
-        idx = (dstrect->x + dstrect->y) ? 1 : 0;
-    }
-
-    gfx.thread[idx].texture = texture;
-    gfx.thread[idx].srt.x = srcrect->x;
-    gfx.thread[idx].srt.y = srcrect->y;
-    gfx.thread[idx].srt.w = srcrect->w;
-    gfx.thread[idx].srt.h = srcrect->h;
-    gfx.thread[idx].drt.x = dstrect->x;
-    gfx.thread[idx].drt.y = dstrect->y;
-    gfx.thread[idx].drt.w = dstrect->w;
-    gfx.thread[idx].drt.h = dstrect->h;
+    gfx.thread.texture = texture;
+    gfx.thread.srt.x = srcrect->x;
+    gfx.thread.srt.y = srcrect->y;
+    gfx.thread.srt.w = srcrect->w;
+    gfx.thread.srt.h = srcrect->h;
+    gfx.thread.drt.x = dstrect->x;
+    gfx.thread.drt.y = dstrect->y;
+    gfx.thread.drt.w = dstrect->w;
+    gfx.thread.drt.h = dstrect->h;
     return 0;
 }
 
 int My_QueueCopy(SDL_Texture *texture, const void *pixels, const SDL_Rect *srcrect, const SDL_FRect *dstrect)
 {
     int pitch = 0;
-    SDL_Rect dst = {dstrect->x, dstrect->y, FB_W, FB_H}; //dstrect->w, dstrect->h};
+    SDL_Rect dst = {dstrect->x, dstrect->y, dstrect->w, dstrect->h};
     SDL_Rect src = {srcrect->x, srcrect->y, srcrect->w, srcrect->h};
 
     pitch = get_pitch(texture);
@@ -339,14 +326,14 @@ SDL_Renderer *MMIYOO_CreateRenderer(SDL_Window *window, Uint32 flags)
 
     renderer = (SDL_Renderer *) SDL_calloc(1, sizeof(*renderer));
     if(!renderer) {
-        printf(PREFIX"failed to create render\n");
+        printf(PREFIX"Failed to create render\n");
         SDL_OutOfMemory();
         return NULL;
     }
 
     data = (MMIYOO_RenderData *) SDL_calloc(1, sizeof(*data));
     if(!data) {
-        printf(PREFIX"failed to create render data\n");
+        printf(PREFIX"Failed to create render data\n");
         MMIYOO_DestroyRenderer(renderer);
         SDL_OutOfMemory();
         return NULL;

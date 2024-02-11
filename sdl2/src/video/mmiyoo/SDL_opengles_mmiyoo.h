@@ -24,9 +24,17 @@
 #ifndef __SDL_OPENGLES_MMIYOO_H__
 #define __SDL_OPENGLES_MMIYOO_H__
 
+#include "../SDL_sysvideo.h"
+
+#ifdef QX1000
+#include <wayland-client.h>
+#include <wayland-egl.h>
+#include <EGL/egl.h>
+#include <GLES2/gl2.h>
+#else
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#include "../SDL_sysvideo.h"
+#endif
 
 typedef struct SDL_GLDriverData {
     EGLDisplay display;
@@ -35,14 +43,15 @@ typedef struct SDL_GLDriverData {
 } SDL_GLDriverData;
 
 void *glGetProcAddress(_THIS, const char *proc);
-extern int glGetConfig(EGLConfig *pconf, int *pformat);
-extern int glLoadLibrary(_THIS, const char *name);
-extern int glSetSwapInterval(_THIS, int interval);
-extern int glSwapWindow(_THIS, SDL_Window *window);
-extern int glMakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context);
-extern int glUpdateBufferSettings(void *pFunc, void *fb_idx, void *fb_vaddr);
-extern void glDeleteContext(_THIS, SDL_GLContext context);
-extern void glUnloadLibrary(_THIS);
-extern SDL_GLContext glCreateContext(_THIS, SDL_Window *window);
+int glGetConfig(EGLConfig *pconf, int *pformat);
+int glLoadLibrary(_THIS, const char *name);
+int glSetSwapInterval(_THIS, int interval);
+int glSwapWindow(_THIS, SDL_Window *window);
+int glMakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context);
+int glUpdateBufferSettings(void *cb, void *flip, void *v0, void *v1);
+void glDeleteContext(_THIS, SDL_GLContext context);
+void glUnloadLibrary(_THIS);
+SDL_GLContext glCreateContext(_THIS, SDL_Window *window);
 
 #endif
+

@@ -77,6 +77,61 @@
     #define MENU    1
 #endif
 
+#ifdef FUNKEYS
+    #define UP      22
+    #define DOWN    32
+    #define LEFT    38
+    #define RIGHT   19
+    #define A       30
+    #define B       48
+    #define X       45
+    #define Y       21
+    #define L1      50
+    #define R1      49
+    #define START   31
+    #define SELECT  37
+    #define MENU    16
+#endif
+
+#ifdef PANDORA
+    #define UP      103
+    #define DOWN    108
+    #define LEFT    105
+    #define RIGHT   106
+    #define A       107
+    #define B       109
+    #define X       104
+    #define Y       102
+    #define L1      54
+    #define R1      97
+    #define START   56
+    #define SELECT  29
+    #define MENU    139
+#endif
+
+#ifdef QX1000
+    #define UP      16 // 'Q'
+    #define DOWN    30 // 'A'
+    #define LEFT    43 // '\'
+    #define RIGHT   31 // 'S'
+    #define A       38 // 'L'
+    #define B       37 // 'K'
+    #define X       25 // 'P'
+    #define Y       24 // 'O'
+    #define R1      17 // 'W'
+    #define R10     51 // ','
+    #define R2      28 // 'Enter'
+    #define L1      41 // '`'
+    #define L10     50 // 'M'
+    #define L2      15 // 'Tab'
+    #define SELECT  53 // '/'
+    #define START   29 // 'RCTRL'
+    #define MENU    57 // ' '
+    #define QSAVE   46 // 'C'
+    #define QLOAD   49 // 'N'
+    #define EXIT    1  // 'ESC'
+#endif
+
 MMIYOO_EventInfo evt = {0};
 
 extern GFX gfx;
