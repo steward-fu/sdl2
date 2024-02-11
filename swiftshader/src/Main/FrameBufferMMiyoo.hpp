@@ -38,8 +38,8 @@ namespace sw
 		void unlock() override;
 
     private:
-        pFunc fb_flip;
-        int *fb_idx;
+        pFunc fb_cb;
+        int *fb_flip;
         void *fb_vaddr[2];
 	};
 }

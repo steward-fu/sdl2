@@ -151,6 +151,7 @@ namespace sw
 	{
 		if(memcmp(&blitState, &updateState, sizeof(BlitState)) != 0)
 		{
+printf("dddd\n");
 			blitState = updateState;
 			blitRoutine = copyRoutine(blitState);
 			blitFunction = (void(*)(void*, void*, Cursor*))blitRoutine->getEntry();
