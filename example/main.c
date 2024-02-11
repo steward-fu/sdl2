@@ -8,8 +8,8 @@
 #include <SDL2_gfxPrimitives.h>
 
 #define PREFIX "[SDL2 TestApp] " 
-const int w = 320;
-const int h = 240;
+const int w = 640;
+const int h = 480;
 const int bpp = 32;
 static SDL_Rect rt = {0};
 static SDL_Window *window = NULL;
@@ -47,9 +47,9 @@ static void flip(void)
     SDL_RenderPresent(renderer);
 }
 
-static void fill_color(void)
+static void test_color(void)
 {
-    printf(PREFIX"%s\n", __func__);
+    printf(PREFIX"Test Color\n");
     SDL_FillRect(screen, &screen->clip_rect, SDL_MapRGB(screen->format, 0xff, 0x00, 0x00));
 
     rt.x = 50;
@@ -63,24 +63,25 @@ static void fill_color(void)
     rt.w = 50;
     rt.h = 100;
     SDL_FillRect(screen, &rt, SDL_MapRGB(screen->format, 0x00, 0x00, 0xff));
-
     flip();
     SDL_Delay(3000);
 }
 
-static void draw_gfx(void)
+static void test_gfx(void)
 {
-    printf(PREFIX"%s\n", __func__);
+    printf(PREFIX"Test GFX\n");
+    SDL_FillRect(screen, &screen->clip_rect, SDL_MapRGB(screen->format, 0xff, 0xff, 0xff));
     SDL_RenderClear(renderer);
-    boxRGBA(renderer, 50, 100, 100, 150, 0xff, 0x00, 0x00, 0xff);
+    boxRGBA(renderer, 10, 10, 150, 100, 0xff, 0x00, 0x00, 0xff);
     SDL_RenderPresent(renderer);
     SDL_Delay(3000);
 }
 
-static void load_png(void)
+static void test_png(void)
 {
-    printf(PREFIX"%s\n", __func__);
+    printf(PREFIX"Test PNG\n");
     SDL_Surface *png = IMG_Load("bg.png");
+    SDL_FillRect(screen, &screen->clip_rect, SDL_MapRGB(screen->format, 0xff, 0xff, 0xff));
     SDL_BlitSurface(png, NULL, screen, NULL);
     SDL_FreeSurface(png);
 
@@ -88,40 +89,15 @@ static void load_png(void)
     SDL_Delay(3000);
 }
 
-static void run_screentear(void)
+static void test_font(void)
 {
-    int cc = 300;
-    uint32_t col[]={0xff0000, 0xff00, 0xff};
-
-    printf(PREFIX"%s\n", __func__);
-    while (cc--) {
-        SDL_FillRect(screen, &screen->clip_rect, col[cc % 3]);
-        flip();
-        SDL_Delay(1000 / 60);
-    }
-}
-
-static void play_wav(void)
-{
-    printf(PREFIX"%s\n", __func__);
-    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096);
-    Mix_Music *music = Mix_LoadMUS("nokia.wav");
-    Mix_PlayMusic(music, 1);
-    SDL_Delay(26000);
-    Mix_HaltMusic();
-    Mix_FreeMusic(music);
-    Mix_CloseAudio();
-}
-
-static void draw_text(void)
-{
-    printf(PREFIX"%s\n", __func__);
+    printf(PREFIX"Test Font\n");
     TTF_Init();
     TTF_Font *font = TTF_OpenFont("font.ttf", 24);
-    SDL_FillRect(screen, &screen->clip_rect, SDL_MapRGB(screen->format, 0x00, 0x00, 0x00));
+    SDL_FillRect(screen, &screen->clip_rect, SDL_MapRGB(screen->format, 0xff, 0xff, 0xff));
 
     int ww = 0, hh = 0;
-    SDL_Color col = {0, 255, 0};
+    SDL_Color col = {255, 0, 0};
     SDL_Rect rt = {0, 100, 0, 0};
     const char *cc = "SDL2 TestApp by 司徒";
 
@@ -138,13 +114,41 @@ static void draw_text(void)
     TTF_Quit();
 }
 
-static void draw_texture(void)
+static void test_audio(void)
+{
+    printf(PREFIX"Test Audio\n");
+    SDL_FillRect(screen, &screen->clip_rect, SDL_MapRGB(screen->format, 0xff, 0xff, 0xff));
+    flip();
+
+    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096);
+    Mix_Music *music = Mix_LoadMUS("nokia.wav");
+    Mix_PlayMusic(music, 1);
+    SDL_Delay(5000);
+    Mix_HaltMusic();
+    Mix_FreeMusic(music);
+    Mix_CloseAudio();
+}
+
+static void test_tear(void)
+{
+    int cc = 300;
+    uint32_t col[]={0xff0000, 0xff00, 0xff};
+
+    printf(PREFIX"Test Tear\n");
+    while (cc--) {
+        SDL_FillRect(screen, &screen->clip_rect, col[cc % 3]);
+        flip();
+        SDL_Delay(1000 / 60);
+    }
+}
+
+static void test_glesv2(void)
 {
     GLuint vShader = 0;
     GLuint fShader = 0;
     GLuint pObject = 0;
 
-    printf(PREFIX"%s\n", __func__);
+    printf(PREFIX"Test GLESv2\n");
     vShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vShader, 1, &vShaderSrc, NULL);
     glCompileShader(vShader);
@@ -164,26 +168,26 @@ static void draw_texture(void)
     GLint samplerLoc = glGetUniformLocation(pObject, "s_texture");
 
     GLuint textureId = 0;
-    GLubyte pixels[320 * 240 * 3] = {0};
+    GLubyte pixels[640 * 480 * 3] = {0};
 
     int x = 0, y = 0;
-    for (y = 0; y < 240; y++) {
-        for (x = 0; x < 320; x++) {
-            switch (y / 80) {
+    for (y = 0; y < h; y++) {
+        for (x = 0; x < w; x++) {
+            switch (y / (h / 3)) {
             case 0:
-                pixels[(y * 320 * 3) + (x * 3) + 0] = 0xff;
-                pixels[(y * 320 * 3) + (x * 3) + 1] = 0x00;
-                pixels[(y * 320 * 3) + (x * 3) + 2] = 0x00;
+                pixels[(y * w * 3) + (x * 3) + 0] = 0xff;
+                pixels[(y * w * 3) + (x * 3) + 1] = 0x00;
+                pixels[(y * w * 3) + (x * 3) + 2] = 0x00;
                 break;
             case 1:
-                pixels[(y * 320 * 3) + (x * 3) + 0] = 0x00;
-                pixels[(y * 320 * 3) + (x * 3) + 1] = 0xff;
-                pixels[(y * 320 * 3) + (x * 3) + 2] = 0x00;
+                pixels[(y * w * 3) + (x * 3) + 0] = 0x00;
+                pixels[(y * w * 3) + (x * 3) + 1] = 0xff;
+                pixels[(y * w * 3) + (x * 3) + 2] = 0x00;
                 break;
             case 2:
-                pixels[(y * 320 * 3) + (x * 3) + 0] = 0x00;
-                pixels[(y * 320 * 3) + (x * 3) + 1] = 0x00;
-                pixels[(y * 320 * 3) + (x * 3) + 2] = 0xff;
+                pixels[(y * w * 3) + (x * 3) + 0] = 0x00;
+                pixels[(y * w * 3) + (x * 3) + 1] = 0x00;
+                pixels[(y * w * 3) + (x * 3) + 2] = 0xff;
                 break;
             }
         }
@@ -192,7 +196,7 @@ static void draw_texture(void)
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glGenTextures(1, &textureId);
     glBindTexture(GL_TEXTURE_2D, textureId);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 320, 240, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -232,19 +236,19 @@ int main(int argc, char **argv)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 
-    window = SDL_CreateWindow("main", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("main", 0, 0, w, h, SDL_WINDOW_OPENGL);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    screen = SDL_CreateRGBSurface(0, w, h, bpp, 0, 0, 0, 0);
-    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w, h);
     context = SDL_GL_CreateContext(window);
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, w, h);
+    screen = SDL_CreateRGBSurface(0, w, h, bpp, 0, 0, 0, 0);
 
-    fill_color();
-    draw_gfx();
-    load_png();
-    draw_text();
-    play_wav();
-    run_screentear();
-    draw_texture();
+    test_color();
+    //test_gfx();
+    //test_png();
+    //test_font();
+    //test_audio();
+    //test_tear();
+    //test_glesv2();
  
     SDL_FreeSurface(screen);
     SDL_DestroyTexture(texture);
