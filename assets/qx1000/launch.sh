@@ -17,7 +17,8 @@ if [ -f "libs/libpng16.so.16" ]; then
     mv libs/libSDL2_ttf-2.0.so.0   libs/__libSDL2_ttf-2.0.so.0
 fi
 
-./test
+./sdl2
+./opengles
 
 if [ -f "libs/__libpng16.so.16" ]; then
     mv libs/__libpng16.so.16         libs/libpng16.so.16

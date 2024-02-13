@@ -9,4 +9,5 @@ export SDL_AUDIODRIVER=mmiyoo
 export EGL_VIDEODRIVER=mmiyoo
 
 cd $mydir
-./test
+./sdl2
+./opengles

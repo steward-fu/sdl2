@@ -16,5 +16,5 @@ else
 fi
 
 cd $mydir
-./test
-./gles
+./sdl2
+./opengles
