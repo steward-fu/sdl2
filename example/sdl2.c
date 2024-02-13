@@ -72,12 +72,12 @@ static void test_font(void)
 {
     printf(PREFIX"Test Font\n");
     TTF_Init();
-    TTF_Font *font = TTF_OpenFont("font.ttf", 24);
+    TTF_Font *font = TTF_OpenFont("font.ttf", 48);
     SDL_FillRect(screen, &screen->clip_rect, SDL_MapRGB(screen->format, 0xff, 0xff, 0xff));
 
     int ww = 0, hh = 0;
     SDL_Color col = {255, 0, 0};
-    SDL_Rect rt = {0, 100, 0, 0};
+    SDL_Rect rt = {30, 30, 0, 0};
     const char *cc = "SDL2 TestApp by 司徒";
 
     TTF_SizeUTF8(font, cc, &ww, &hh);
