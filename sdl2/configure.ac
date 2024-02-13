@@ -2406,7 +2406,7 @@ CheckMMiyooVideo()
         SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
         have_video=yes
         EXTRA_CFLAGS="$EXTRA_CFLAGS -DMMIYOO -fPIC -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3 -I../mmiyoo/inc -I/opt/mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2"
-        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L. -lEGL -lGLESv2"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljson-c -L. -lEGL -lGLESv2"
         SUMMARY_video="${SUMMARY_video} mmiyoo"
     fi
 }
@@ -2419,7 +2419,7 @@ CheckTrimuiVideo()
         SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
         have_video=yes
         EXTRA_CFLAGS="$EXTRA_CFLAGS -DTRIMUI -fPIC -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3 -I../trimui/inc -I/opt/mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2"
-        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L. -lEGL -lGLESv2"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljson-c -L. -lEGL -lGLESv2"
         SUMMARY_video="${SUMMARY_video} mmiyoo"
     fi
 }
@@ -2432,7 +2432,7 @@ CheckFunkeysVideo()
         SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
         have_video=yes
         EXTRA_CFLAGS="$EXTRA_CFLAGS -DFUNKEYS -fPIC -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3 -I../funkeys/inc -I/opt/mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2"
-        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L. -lEGL -lGLESv2"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljson-c -L. -lEGL -lGLESv2"
         SUMMARY_video="${SUMMARY_video} mmiyoo"
     fi
 }
@@ -2445,7 +2445,7 @@ CheckPandoraVideo()
         SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
         have_video=yes
         EXTRA_CFLAGS="$EXTRA_CFLAGS -DPANDORA -fPIC -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon -ffast-math -O3 -I/usr/local/include/SDL2"
-        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L. -lEGL -lGLESv2"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljson-c -L. -lEGL -lGLESv2"
         SUMMARY_video="${SUMMARY_video} mmiyoo"
     fi
 }
@@ -2458,7 +2458,7 @@ CheckQX1000Video()
         SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
         have_video=yes
         EXTRA_CFLAGS="$EXTRA_CFLAGS -DQX1000 -fPIC -mcpu=cortex-a53 -mtune=cortex-a53 -mfpu=neon -O3 -I/usr/local/include/SDL2"
-        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -L. -lEGL -lGLESv2"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljson-c -lwayland-client -lwayland-egl -L. -lEGL -lGLESv2"
         SUMMARY_video="${SUMMARY_video} mmiyoo"
     fi
 }
@@ -2471,7 +2471,7 @@ CheckUnittestVideo()
         SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
         have_video=yes
         EXTRA_CFLAGS="$EXTRA_CFLAGS -DUNITTEST -DMMIYOO -fPIC -I../mmiyoo/inc -I/opt/mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2 -I../unittest/extras/fixture/src -I../unittest/src -I../unittest/extras/memory/src"
-        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L. -lEGL -lGLESv2"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljson-c -L. -lEGL -lGLESv2"
         SUMMARY_video="${SUMMARY_video} mmiyoo"
     fi
 }
