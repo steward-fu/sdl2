@@ -89,6 +89,7 @@ example:
 	cp swiftshader/build/*.so example/libs/
 	cp sdl2/build/.libs/libSDL2-2.0.so.0 example/libs/
 	$(CC) example/main.c $(SDL2_INC) -lSDL2 -lSDL2_mixer -lSDL2_image -lSDL2_gfx -lSDL2_ttf swiftshader/build/libGLESv2.so -o example/test
+	$(CXX) example/gles.cpp -Wno-narrowing $(SDL2_INC) -lSDL2 -lSDL2_mixer -lSDL2_image -lSDL2_gfx -lSDL2_ttf swiftshader/build/libGLESv2.so -o example/gles
 
 .PHONY: cfg
 cfg:
