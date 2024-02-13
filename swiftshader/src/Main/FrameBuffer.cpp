@@ -151,7 +151,6 @@ namespace sw
 	{
 		if(memcmp(&blitState, &updateState, sizeof(BlitState)) != 0)
 		{
-printf("dddd\n");
 			blitState = updateState;
 			blitRoutine = copyRoutine(blitState);
 			blitFunction = (void(*)(void*, void*, Cursor*))blitRoutine->getEntry();
@@ -169,25 +168,15 @@ printf("dddd\n");
 		const int sBytes = Surface::bytes(state.sourceFormat);
 		const int sStride = state.sourceStride;
 
-        printf("%s, w:%d, h:%d, dBytes:%d, dStride:%d, dFormat:%d, sBytes:%d, sStride:%d, sFormat:%d\n",
-            __func__, width, height, dBytes, dStride, state.destFormat, sBytes, sStride, state.sourceFormat);
+        //printf("width:%d, height:%d, dBytes:%d, dStride:%d, dFormat:%d, sBytes:%d, sStride:%d, sFormat:%d\n", \
+            width, height, dBytes, dStride, state.destFormat, sBytes, sStride, state.sourceFormat);
+
 		Function<Void(Pointer<Byte>, Pointer<Byte>, Pointer<Byte>)> function;
 		{
 			Pointer<Byte> dst(function.Arg<0>());
 			Pointer<Byte> src(function.Arg<1>());
 			Pointer<Byte> cursor(function.Arg<2>());
 
-#if 1
-			For(Int y = 0, y < height, y++) {
-				For(Int x = 0, x < width, x++) {
-					Int rgb = Int(*Pointer<Short>(src + (y * sStride) + (x * sBytes)));
-					*Pointer<Int>(dst + (((height - 1) - y) * dStride) + (((width - 1) - x) * dBytes)) = 
-                       ((rgb & 0xF800) << 8) | ((rgb & 0xE01F) << 3) |
-                       ((rgb & 0x07E0) << 5) | ((rgb & 0x0600) >> 1) |
-                       ((rgb & 0x001C) >> 2);
-                }
-			}
-#else
 			For(Int y = 0, y < height, y++)
 			{
 				Pointer<Byte> d = dst + y * dStride;
@@ -539,7 +528,6 @@ printf("dddd\n");
 					}
 				}
 			}
-#endif
 		}
 
 		return function("FrameBuffer");

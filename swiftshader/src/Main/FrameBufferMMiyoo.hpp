@@ -20,7 +20,7 @@
 #include "Main/FrameBuffer.hpp"
 #include "Common/Debug.hpp"
 
-typedef void (*pFunc)(void);
+typedef void* (*pFunc)(void);
 
 namespace sw
 {
@@ -39,8 +39,7 @@ namespace sw
 
     private:
         pFunc fb_cb;
-        int *fb_flip;
-        void *fb_vaddr[2];
+        void *fb_buf;
 	};
 }
 

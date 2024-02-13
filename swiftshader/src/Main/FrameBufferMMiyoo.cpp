@@ -27,9 +27,7 @@ namespace sw {
 	FrameBufferMMiyoo::FrameBufferMMiyoo(int width, int height) : FrameBuffer(width, height, false, false)
 	{
         fb_cb = NULL;
-        fb_flip = NULL;
-        fb_vaddr[0] = NULL;
-        fb_vaddr[1] = NULL;
+        fb_buf = NULL;
 	}
 
 	FrameBufferMMiyoo::~FrameBufferMMiyoo()
@@ -38,10 +36,11 @@ namespace sw {
 
 	void *FrameBufferMMiyoo::lock()
 	{
-        int idx = *fb_flip ? 1 : 0;
-
-        stride = 640 * 4;
-        return framebuffer = fb_vaddr[idx];
+        if (fb_cb && fb_buf) {
+            stride = 640 * 4;
+            return framebuffer = fb_buf;
+        }
+        return NULL;
 	}
 
 	void FrameBufferMMiyoo::unlock()
@@ -51,17 +50,19 @@ namespace sw {
 
 	void FrameBufferMMiyoo::blit(sw::Surface *source, const Rect *sourceRect, const Rect *destRect)
 	{
-        copy(source);
-        fb_cb();
+        if (fb_cb && fb_buf) {
+            copy(source);
+            fb_buf = fb_cb();
+        }
 	}
 
     void FrameBufferMMiyoo::updateBufferSettings(void *p0, void *p1, void *p2)
     {
         fb_cb = (pFunc)p0;
-        fb_flip = (int *)p1;
-        fb_vaddr[0] = (void *)(*((unsigned long *)p2 + 0));
-        fb_vaddr[1] = (void *)(*((unsigned long *)p2 + 1));
-        printf("[GPU] Updated Buffer Settings (CB %p, vAddr0 %p, vAddr1 %p)\n", fb_cb, fb_vaddr[0], fb_vaddr[1]);
+        if (fb_cb) {
+            fb_buf = fb_cb();
+        }
+        printf("[GPU] Updated Buffer Settings (cb %p, buf %p)\n", fb_cb, fb_buf);
     }
 }
 

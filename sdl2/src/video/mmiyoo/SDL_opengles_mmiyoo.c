@@ -33,10 +33,8 @@ static EGLContext context = 0;
 static EGLSurface surface = 0;
 static EGLConfig config = 0;
 static void *fb_cb = NULL;
-static void *fb_flip = NULL;
-static unsigned long fb_vaddr[2] = {0};
 
-EGLBoolean eglUpdateBufferSettings(EGLDisplay display, EGLSurface surface, void *pFunc, void *fb_idx, void *fb_vaddr);
+EGLBoolean eglUpdateBufferSettings(EGLDisplay display, EGLSurface surface, void *cb, void *p0, void *p1);
 
 int glLoadLibrary(_THIS, const char *name)
 {
@@ -130,9 +128,9 @@ SDL_GLContext glCreateContext(_THIS, SDL_Window *window)
         return NULL;
     }
 
-    printf(PREFIX"Passing Buffer Settings (CB %p, vAddr0 0x%lx, vAddr1 0x%lx)\n", fb_cb, fb_vaddr[0], fb_vaddr[1]);
+    printf(PREFIX"Passing Buffer Settings (cb %p)\n", fb_cb);
     eglMakeCurrent(display, surface, surface, context);
-    eglUpdateBufferSettings(display, surface, fb_cb, fb_flip, fb_vaddr);
+    eglUpdateBufferSettings(display, surface, fb_cb, NULL, NULL);
     printf(PREFIX"Prepared EGL successfully\n");
     return context;
 }
@@ -142,13 +140,10 @@ int glSetSwapInterval(_THIS, int interval)
     return 0;
 }
 
-int glUpdateBufferSettings(void *cb, void *flip, void *v0, void *v1)
+int glUpdateBufferSettings(void *cb)
 {
     fb_cb = cb;
-    fb_flip = flip;
-    fb_vaddr[0] = (unsigned long)v0;
-    fb_vaddr[1] = (unsigned long)v1;
-    printf(PREFIX"Updated Buffer Settings (CB %p, vAddr0 %p, vAddr1 %p)\n", cb, v0, v1);
+    printf(PREFIX"Updated Buffer Settings (cb %p)\n", cb);
     return 0;
 }
 

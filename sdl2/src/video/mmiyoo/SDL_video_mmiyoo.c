@@ -873,7 +873,6 @@ void GFX_Flip(void)
 #endif
 
 #ifdef MMIYOO
-    MI_SYS_FlushInvCache(gfx.fb.virAddr, FB_SIZE);
     ioctl(gfx.fb_dev, FBIOPAN_DISPLAY, &gfx.vinfo);
     gfx.vinfo.yoffset ^= FB_H;
 #endif
@@ -886,6 +885,19 @@ void GFX_Flip(void)
     ioctl(gfx.fb_dev, FBIO_WAITFORVSYNC, &r);
     gfx.fb.flip^= 1;
 #endif
+}
+
+void* GFX_CB(void)
+{
+#ifdef MMIYOO
+    SDL_Rect srt = {0, 0, FB_W, FB_H};
+    SDL_Rect drt = {0, 0, FB_W, FB_H};
+
+    GFX_Copy(gfx.tmp.virAddr, srt, drt, FB_W * FB_BPP, 0, E_MI_GFX_ROTATE_180);
+    GFX_Flip();
+    return gfx.tmp.virAddr;
+#endif
+    return NULL;
 }
 
 static int MMIYOO_Available(void)
@@ -913,12 +925,12 @@ int MMIYOO_CreateWindow(_THIS, SDL_Window *window)
     vid.window = window;
 
 #ifdef MMIYOO
-    glUpdateBufferSettings(GFX_Flip, &gfx.vinfo.yoffset, gfx.fb.virAddr, (uint8_t*)gfx.fb.virAddr + (FB_W * FB_H * FB_BPP));
+    glUpdateBufferSettings(GFX_CB);
 #endif
 
 #ifdef QX1000
     update_wayland_res(window->w, window->h);
-    glUpdateBufferSettings(GFX_Flip, &wl.flip, wl.pixels[0], wl.pixels[1]);
+    glUpdateBufferSettings(GFX_CB);
 #endif
     printf(PREFIX"Window %p (width:%d, height:%d)\n", window, window->w, window->h);
     return 0;
