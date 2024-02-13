@@ -17,3 +17,4 @@ fi
 
 cd $mydir
 ./test
+./gles

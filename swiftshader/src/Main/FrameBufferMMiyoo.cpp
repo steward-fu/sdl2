@@ -38,7 +38,7 @@ namespace sw {
 
 	void *FrameBufferMMiyoo::lock()
 	{
-        int idx = *fb_flip % 2;
+        int idx = *fb_flip ? 1 : 0;
 
         stride = 640 * 4;
         return framebuffer = fb_vaddr[idx];

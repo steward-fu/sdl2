@@ -244,11 +244,11 @@ int main(int argc, char **argv)
 
     test_color();
     //test_gfx();
-    //test_png();
-    //test_font();
-    //test_audio();
-    //test_tear();
-    //test_glesv2();
+    test_png();
+    test_font();
+    test_audio();
+    test_tear();
+    test_glesv2();
  
     SDL_FreeSurface(screen);
     SDL_DestroyTexture(texture);

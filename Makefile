@@ -98,6 +98,6 @@ cfg:
 
 .PHONY: clean
 clean:
-	cd example && rm -rf test launch.sh config.json
+	cd example && rm -rf test gles launch.sh config.json
 	cd example/libs && rm -rf libEGL.so libGLESv2.so libSDL2-2.0.so.0
 	make -C sdl2 distclean

@@ -873,6 +873,7 @@ void GFX_Flip(void)
 #endif
 
 #ifdef MMIYOO
+    MI_SYS_FlushInvCache(gfx.fb.virAddr, FB_SIZE);
     ioctl(gfx.fb_dev, FBIOPAN_DISPLAY, &gfx.vinfo);
     gfx.vinfo.yoffset ^= FB_H;
 #endif
@@ -910,6 +911,11 @@ int MMIYOO_CreateWindow(_THIS, SDL_Window *window)
 {
     SDL_SetMouseFocus(window);
     vid.window = window;
+
+#ifdef MMIYOO
+    glUpdateBufferSettings(GFX_Flip, &gfx.vinfo.yoffset, gfx.fb.virAddr, (uint8_t*)gfx.fb.virAddr + (FB_W * FB_H * FB_BPP));
+#endif
+
 #ifdef QX1000
     update_wayland_res(window->w, window->h);
     glUpdateBufferSettings(GFX_Flip, &wl.flip, wl.pixels[0], wl.pixels[1]);
