@@ -373,8 +373,8 @@ bool WindowSurface::checkForResize()
 		int windowHeight = windowAttributes.height;
 	#elif defined(__linux__)
 		// Non X11 linux is headless only
-		int windowWidth = 640;
-		int windowHeight = 480;
+		int windowWidth = 320;
+		int windowHeight = 240;
 	#elif defined(__APPLE__)
 		int windowWidth;
 		int windowHeight;

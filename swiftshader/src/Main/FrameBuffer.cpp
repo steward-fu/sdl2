@@ -496,7 +496,7 @@ namespace sw
 					break;
 				}
 			}
-
+#if 0
 			if(state.cursorWidth > 0 && state.cursorHeight > 0)
 			{
 				Int x0 = *Pointer<Int>(cursor + OFFSET(Cursor,x));
@@ -528,6 +528,7 @@ namespace sw
 					}
 				}
 			}
+#endif
 		}
 
 		return function("FrameBuffer");

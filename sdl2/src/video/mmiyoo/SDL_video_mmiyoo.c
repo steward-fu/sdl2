@@ -611,9 +611,6 @@ int fb_init(void)
 
     MI_SYS_MMA_Alloc(NULL, TMP_SIZE, &gfx.tmp.phyAddr);
     MI_SYS_Mmap(gfx.tmp.phyAddr, TMP_SIZE, &gfx.tmp.virAddr, TRUE);
-
-    MI_SYS_MMA_Alloc(NULL, TMP_SIZE, &gfx.overlay.phyAddr);
-    MI_SYS_Mmap(gfx.overlay.phyAddr, TMP_SIZE, &gfx.overlay.virAddr, TRUE);
     return 0;
 }
 
@@ -622,8 +619,6 @@ int fb_quit(void)
     MI_SYS_Munmap(gfx.fb.virAddr, TMP_SIZE);
     MI_SYS_Munmap(gfx.tmp.virAddr, TMP_SIZE);
     MI_SYS_MMA_Free(gfx.tmp.phyAddr);
-    MI_SYS_Munmap(gfx.overlay.virAddr, TMP_SIZE);
-    MI_SYS_MMA_Free(gfx.overlay.phyAddr);
 
     MI_GFX_Close();
     MI_SYS_Exit();
@@ -816,23 +811,17 @@ int GFX_Copy(const void *pixels, SDL_Rect srcrect, SDL_Rect dstrect, int pitch, 
 #endif
 
 #ifdef MMIYOO
-    int copy_it = 1;
     MI_U16 u16Fence = 0;
-    int is_rgb565 = (pitch / srcrect.w) == 2 ? 1 : 0;
 
-    if (pixels == NULL) {
-        return -1;
-    }
+    int is_rgb565 = 1;//(pitch / srcrect.w) == 2 ? 1 : 0;
 
-    if (copy_it) {
-        memcpy(gfx.tmp.virAddr, pixels, srcrect.h * pitch);
-    }
-
+    pitch = 320 * 2;//1280;
     gfx.hw.opt.u32GlobalSrcConstColor = 0;
     gfx.hw.opt.eRotate = rotate;
     gfx.hw.opt.eSrcDfbBldOp = E_MI_GFX_DFB_BLD_ONE;
     gfx.hw.opt.eDstDfbBldOp = 0;
     gfx.hw.opt.eDFBBlendFlag = 0;
+    gfx.hw.opt.eMirror = E_MI_GFX_MIRROR_HORIZONTAL;
 
     gfx.hw.src.rt.s32Xpos = srcrect.x;
     gfx.hw.src.rt.s32Ypos = srcrect.y;
@@ -887,17 +876,16 @@ void GFX_Flip(void)
 #endif
 }
 
-void* GFX_CB(void)
+void GFX_CB(void)
 {
 #ifdef MMIYOO
-    SDL_Rect srt = {0, 0, FB_W, FB_H};
+    SDL_Rect srt = {0, 0, 320, 240};
     SDL_Rect drt = {0, 0, FB_W, FB_H};
 
-    GFX_Copy(gfx.tmp.virAddr, srt, drt, FB_W * FB_BPP, 0, E_MI_GFX_ROTATE_180);
+    //gfx.action = GFX_ACTION_FLIP;
+    GFX_Copy(gfx.tmp.virAddr, srt, drt, FB_W * FB_BPP, 0, E_MI_GFX_ROTATE_0);
     GFX_Flip();
-    return gfx.tmp.virAddr;
 #endif
-    return NULL;
 }
 
 static int MMIYOO_Available(void)
@@ -925,12 +913,12 @@ int MMIYOO_CreateWindow(_THIS, SDL_Window *window)
     vid.window = window;
 
 #ifdef MMIYOO
-    glUpdateBufferSettings(GFX_CB);
+    glUpdateBufferSettings(GFX_CB, gfx.tmp.virAddr);
 #endif
 
 #ifdef QX1000
     update_wayland_res(window->w, window->h);
-    glUpdateBufferSettings(GFX_CB);
+    glUpdateBufferSettings(GFX_CB, gfx.tmp.virAddr);
 #endif
     printf(PREFIX"Window %p (width:%d, height:%d)\n", window, window->w, window->h);
     return 0;

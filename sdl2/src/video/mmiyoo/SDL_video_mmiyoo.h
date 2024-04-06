@@ -172,14 +172,14 @@ typedef struct _GFX {
 #ifdef TRIMUI
         int flip;
 #endif
-    } fb, tmp, overlay;
+    } fb, tmp;
 
     struct _HW {
 #ifdef MMIYOO
         struct _BUF {
             MI_GFX_Surface_t surf;
             MI_GFX_Rect_t rt;
-        } src, dst, overlay;
+        } src, dst;
         MI_GFX_Opt_t opt;
 #endif
 

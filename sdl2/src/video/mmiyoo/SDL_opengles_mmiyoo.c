@@ -33,8 +33,9 @@ static EGLContext context = 0;
 static EGLSurface surface = 0;
 static EGLConfig config = 0;
 static void *fb_cb = NULL;
+static void *fb_buf = NULL;
 
-EGLBoolean eglUpdateBufferSettings(EGLDisplay display, EGLSurface surface, void *cb, void *p0, void *p1);
+EGLBoolean eglUpdateBufferSettings(EGLDisplay display, EGLSurface surface, void *cb, void *buf, void *p1);
 
 int glLoadLibrary(_THIS, const char *name)
 {
@@ -128,9 +129,9 @@ SDL_GLContext glCreateContext(_THIS, SDL_Window *window)
         return NULL;
     }
 
-    printf(PREFIX"Passing Buffer Settings (cb %p)\n", fb_cb);
+    printf(PREFIX"Passing Buffer Settings (cb %p, buf %p)\n", fb_cb, fb_buf);
     eglMakeCurrent(display, surface, surface, context);
-    eglUpdateBufferSettings(display, surface, fb_cb, NULL, NULL);
+    eglUpdateBufferSettings(display, surface, fb_cb, fb_buf, NULL);
     printf(PREFIX"Prepared EGL successfully\n");
     return context;
 }
@@ -140,10 +141,11 @@ int glSetSwapInterval(_THIS, int interval)
     return 0;
 }
 
-int glUpdateBufferSettings(void *cb)
+int glUpdateBufferSettings(void *cb, void *buf)
 {
     fb_cb = cb;
-    printf(PREFIX"Updated Buffer Settings (cb %p)\n", cb);
+    fb_buf = buf;
+    printf(PREFIX"Updated Buffer Settings (cb %p, buf %p)\n", cb, buf);
     return 0;
 }
 

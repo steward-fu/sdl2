@@ -36,10 +36,6 @@ namespace sw {
 
 	void *FrameBufferMMiyoo::lock()
 	{
-        if (fb_cb && fb_buf) {
-            stride = 640 * 4;
-            return framebuffer = fb_buf;
-        }
         return NULL;
 	}
 
@@ -50,18 +46,19 @@ namespace sw {
 
 	void FrameBufferMMiyoo::blit(sw::Surface *source, const Rect *sourceRect, const Rect *destRect)
 	{
-        if (fb_cb && fb_buf) {
-            copy(source);
-            fb_buf = fb_cb();
-        }
+        source->setDMABuffer(fb_buf);
+
+        // stride = 1280
+        int stride = source->getInternalPitchB();
+        void *buf = source->lockInternal(0, 0, 0, sw::LOCK_READONLY, sw::PUBLIC);
+        fb_cb();
+        source->unlockInternal();
 	}
 
     void FrameBufferMMiyoo::updateBufferSettings(void *p0, void *p1, void *p2)
     {
         fb_cb = (pFunc)p0;
-        if (fb_cb) {
-            fb_buf = fb_cb();
-        }
+        fb_buf = p1;
         printf("[GPU] Updated Buffer Settings (cb %p, buf %p)\n", fb_cb, fb_buf);
     }
 }

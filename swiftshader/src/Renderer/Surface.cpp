@@ -1307,6 +1307,7 @@ namespace sw
 
 		dirtyContents = true;
 		paletteUsed = 0;
+        dmaBuffer = nullptr;
 	}
 
 	Surface::Surface(Resource *texture, int width, int height, int depth, int border, int samples, Format format, bool lockable, bool renderTarget, int pitchPprovided) : lockable(lockable), renderTarget(renderTarget)
@@ -1458,7 +1459,14 @@ namespace sw
 			}
 			else
 			{
-				internal.buffer = allocateBuffer(internal.width, internal.height, internal.depth, internal.border, internal.samples, internal.format);
+                printf("[GPU] internal.width %d, internal.height %d, internal.format %d\n", internal.width, internal.height, internal.format);
+                if ((dmaBuffer != NULL) && (internal.width == 320) && (internal.height == 240) && (internal.format == FORMAT_R5G6B5)) {
+                    internal.buffer = dmaBuffer;
+                    printf("[GPU] Use DMA Buffer for Miyoo (%p)\n", dmaBuffer);
+                }
+                else {
+				    internal.buffer = allocateBuffer(internal.width, internal.height, internal.depth, internal.border, internal.samples, internal.format);
+                }
 			}
 		}
 

@@ -357,6 +357,7 @@ namespace sw
 		void markContentsClean();
 		inline bool isExternalDirty() const;
 		Resource *getResource();
+		inline void setDMABuffer(void *buf);
 
 		static int bytes(Format format);
 		static int pitchB(int width, int border, Format format, bool target);
@@ -504,6 +505,7 @@ namespace sw
 		static unsigned int *palette;   // FIXME: Not multi-device safe
 		static unsigned int paletteID;
 
+        void *dmaBuffer;
 		bool hasParent;
 		bool ownExternal;
 	};
@@ -603,6 +605,11 @@ namespace sw
 	{
 		return internal.pitchB;
 	}
+
+    void Surface::setDMABuffer(void *buf)
+    {
+        dmaBuffer = buf;
+    }
 
 	int Surface::getInternalPitchP() const
 	{

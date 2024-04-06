@@ -48,7 +48,7 @@ int glLoadLibrary(_THIS, const char *name);
 int glSetSwapInterval(_THIS, int interval);
 int glSwapWindow(_THIS, SDL_Window *window);
 int glMakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context);
-int glUpdateBufferSettings(void *cb);
+int glUpdateBufferSettings(void *cb, void *buf);
 void glDeleteContext(_THIS, SDL_GLContext context);
 void glUnloadLibrary(_THIS);
 SDL_GLContext glCreateContext(_THIS, SDL_Window *window);
