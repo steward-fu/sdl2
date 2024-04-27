@@ -2398,6 +2398,18 @@ CheckQNXAudio()
     fi
 }
 
+CheckA30Video()
+{
+    if test x$enable_video = xyes; then
+        AC_DEFINE(SDL_VIDEO_DRIVER_A30, 1, [ ])
+        SOURCES="$SOURCES $srcdir/src/video/a30/*.c"
+        have_video=yes
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -fPIC -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3 -I/opt/a30/arm-a30-linux-gnueabihf/sysroot/usr/include/SDL2"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L. -lMali -ldl"
+        SUMMARY_video="${SUMMARY_video} a30"
+    fi
+}
+
 CheckMMiyooVideo()
 {
     if test x$enable_video = xyes; then
@@ -3841,6 +3853,9 @@ case "$host" in
         esac
 
         case "$MOD" in
+            *a30*)              ARCH=a30
+                CheckA30Video
+                ;;
             *mmiyoo*)           ARCH=mmiyoo
                 CheckMMiyooVideo
                 ;;

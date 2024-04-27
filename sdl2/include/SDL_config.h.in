@@ -477,6 +477,7 @@
 /* Enable dynamic libsamplerate support */
 #undef SDL_LIBSAMPLERATE_DYNAMIC
 
+#undef SDL_VIDEO_DRIVER_A30
 #undef SDL_VIDEO_DRIVER_MMIYOO
 #undef SDL_VIDEO_RENDER_MMIYOO
 #undef SDL_AUDIO_DRIVER_MMIYOO
