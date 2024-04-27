@@ -24,7 +24,6 @@
 
 #include "../../SDL_internal.h"
 #include "../SDL_sysvideo.h"
-
 #include "SDL_egl.h"
 
 #include <EGL/egl.h>
@@ -37,6 +36,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#define PREFIX  "[SDL2] "
+#define LCD_W   640
+#define LCD_H   480
+#define REAL_W  LCD_H
+#define REAL_H  LCD_W
+
 typedef struct SDL_DisplayData {
     struct fbdev_window native_display;
 } SDL_DisplayData;
@@ -46,20 +51,18 @@ typedef struct SDL_WindowData {
 } SDL_WindowData;
 
 int A30_VideoInit(_THIS);
-void A30_VideoQuit(_THIS);
-void A30_GetDisplayModes(_THIS, SDL_VideoDisplay * display);
 int A30_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode);
 int A30_CreateWindow(_THIS, SDL_Window * window);
+void A30_VideoQuit(_THIS);
+void A30_GetDisplayModes(_THIS, SDL_VideoDisplay * display);
 void A30_SetWindowTitle(_THIS, SDL_Window * window);
 void A30_SetWindowPosition(_THIS, SDL_Window * window);
 void A30_SetWindowSize(_THIS, SDL_Window * window);
 void A30_ShowWindow(_THIS, SDL_Window * window);
 void A30_HideWindow(_THIS, SDL_Window * window);
 void A30_DestroyWindow(_THIS, SDL_Window * window);
-
-SDL_bool A30_GetWindowWMInfo(_THIS, SDL_Window * window, struct SDL_SysWMinfo *info);
-
 void A30_PumpEvents(_THIS);
+SDL_bool A30_GetWindowWMInfo(_THIS, SDL_Window * window, struct SDL_SysWMinfo *info);
 
 #endif
 

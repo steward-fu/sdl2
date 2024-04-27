@@ -18,19 +18,19 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "../../SDL_internal.h"
 
-#include "../SDL_sysvideo.h"
+#include "../../SDL_internal.h"
 #include "SDL_version.h"
 #include "SDL_syswm.h"
 #include "SDL_loadso.h"
 #include "SDL_events.h"
+#include "../SDL_sysvideo.h"
 #include "../../events/SDL_events_c.h"
 
 #include "SDL_video_a30.h"
 #include "SDL_opengles_a30.h"
 
-static void A30_Destroy(SDL_VideoDevice * device)
+static void A30_Destroy(SDL_VideoDevice *device)
 {
     if (device->driverdata != NULL) {
         SDL_free(device->driverdata);
@@ -40,9 +40,9 @@ static void A30_Destroy(SDL_VideoDevice * device)
 
 static SDL_VideoDevice* A30_CreateDevice(int devindex)
 {
-    SDL_VideoDevice *device;
+    SDL_VideoDevice *device = NULL;
 
-    device = (SDL_VideoDevice *) SDL_calloc(1, sizeof(SDL_VideoDevice));
+    device = (SDL_VideoDevice *)SDL_calloc(1, sizeof(SDL_VideoDevice));
     if (device == NULL) {
         SDL_OutOfMemory();
         return NULL;
@@ -83,52 +83,41 @@ VideoBootStrap A30_bootstrap = { "a30", "Miyoo A30 Video Driver", A30_CreateDevi
 int A30_VideoInit(_THIS)
 {
     int fd = -1;
-    struct fb_var_screeninfo vinfo;
+    struct fb_var_screeninfo vinfo = {0};
+    SDL_DisplayData *data = NULL;
+    SDL_VideoDisplay display = {0};
+    SDL_DisplayMode current_mode = {0};
 
-    SDL_VideoDisplay display;
-    SDL_DisplayMode current_mode;
-    SDL_DisplayData *data;
-
-    data = (SDL_DisplayData *) SDL_calloc(1, sizeof(SDL_DisplayData));
+    data = (SDL_DisplayData *)SDL_calloc(1, sizeof(SDL_DisplayData));
     if (data == NULL) {
         return SDL_OutOfMemory();
     }
 
     fd = open("/dev/fb0", O_RDWR, 0);
     if (fd < 0) {
-        return SDL_SetError("failed to open framebuffer device");
+        return printf(PREFIX"Failed to open framebuffer device");
     }
 
     if (ioctl(fd, FBIOGET_VSCREENINFO, &vinfo) < 0) {
         A30_VideoQuit(_this);
-        return SDL_SetError("failed to get framebuffer information");
+        return printf(PREFIX"Failed to get framebuffer information");
     }
-
-    /* Enable triple buffering */
-    /*
-    vinfo.yres_virtual = vinfo.yres * 3;
-    if (ioctl(fd, FBIOPUT_VSCREENINFO, vinfo) == -1) {
-	printf("a30: Error setting VSCREENINFO\n");
-    }
-    */
     close(fd);
 
-    data->native_display.width = vinfo.xres;
-    data->native_display.height = vinfo.yres;
+    data->native_display.width = LCD_W;
+    data->native_display.height = LCD_H;
 
     SDL_zero(current_mode);
-    current_mode.w = vinfo.xres;
-    current_mode.h = vinfo.yres;
+    current_mode.w = LCD_W;
+    current_mode.h = LCD_H;
     current_mode.refresh_rate = 60;
-    //current_mode.format = SDL_PIXELFORMAT_ABGR8888;
-    current_mode.format = SDL_PIXELFORMAT_RGBX8888;
+    current_mode.format = SDL_PIXELFORMAT_ABGR8888;
     current_mode.driverdata = NULL;
 
     SDL_zero(display);
     display.desktop_mode = current_mode;
     display.current_mode = current_mode;
     display.driverdata = data;
-
     SDL_AddVideoDisplay(&display, SDL_FALSE);
     return 0;
 }
@@ -137,23 +126,23 @@ void A30_VideoQuit(_THIS)
 {
 }
 
-void A30_GetDisplayModes(_THIS, SDL_VideoDisplay * display)
+void A30_GetDisplayModes(_THIS, SDL_VideoDisplay *display)
 {
     SDL_AddDisplayMode(display, &display->current_mode);
 }
 
-int A30_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode)
+int A30_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode)
 {
     return 0;
 }
 
-int A30_CreateWindow(_THIS, SDL_Window * window)
+int A30_CreateWindow(_THIS, SDL_Window *window)
 {
-    SDL_WindowData *windowdata;
-    SDL_DisplayData *displaydata;
+    SDL_WindowData *windowdata = NULL;
+    SDL_DisplayData *displaydata = NULL;
 
     displaydata = SDL_GetDisplayDriverData(0);
-    windowdata = (SDL_WindowData *) SDL_calloc(1, sizeof(SDL_WindowData));
+    windowdata = (SDL_WindowData *)SDL_calloc(1, sizeof(SDL_WindowData));
     if (windowdata == NULL) {
         return SDL_OutOfMemory();
     }
@@ -166,12 +155,16 @@ int A30_CreateWindow(_THIS, SDL_Window * window)
             return -1;
         }
     }
-    windowdata->egl_surface = SDL_EGL_CreateSurface(_this, (NativeWindowType) &displaydata->native_display);
 
+    displaydata->native_display.width = REAL_W;
+    displaydata->native_display.height = REAL_H;
+    windowdata->egl_surface = SDL_EGL_CreateSurface(_this, (NativeWindowType)&displaydata->native_display);
     if (windowdata->egl_surface == EGL_NO_SURFACE) {
         A30_VideoQuit(_this);
-        return SDL_SetError("failed to create EGL window surface");
+        return printf(PREFIX"Failed to create EGL window surface");
     }
+    displaydata->native_display.width = LCD_W;
+    displaydata->native_display.height = LCD_H;
 
     window->driverdata = windowdata;
     SDL_SetMouseFocus(window);
@@ -179,9 +172,9 @@ int A30_CreateWindow(_THIS, SDL_Window * window)
     return 0;
 }
 
-void A30_DestroyWindow(_THIS, SDL_Window * window)
+void A30_DestroyWindow(_THIS, SDL_Window *window)
 {
-    SDL_WindowData *data;
+    SDL_WindowData *data = NULL;
 
     data = window->driverdata;
     if (data) {
@@ -194,34 +187,29 @@ void A30_DestroyWindow(_THIS, SDL_Window * window)
     window->driverdata = NULL;
 }
 
-void A30_SetWindowTitle(_THIS, SDL_Window * window)
+void A30_SetWindowTitle(_THIS, SDL_Window *window)
 {
 }
 
-void A30_SetWindowPosition(_THIS, SDL_Window * window)
+void A30_SetWindowPosition(_THIS, SDL_Window *window)
 {
 }
 
-void A30_SetWindowSize(_THIS, SDL_Window * window)
+void A30_SetWindowSize(_THIS, SDL_Window *window)
 {
 }
 
-void A30_ShowWindow(_THIS, SDL_Window * window)
+void A30_ShowWindow(_THIS, SDL_Window *window)
 {
 }
 
-void A30_HideWindow(_THIS, SDL_Window * window)
+void A30_HideWindow(_THIS, SDL_Window *window)
 {
 }
 
-SDL_bool A30_GetWindowWMInfo(_THIS, SDL_Window * window, struct SDL_SysWMinfo *info)
+SDL_bool A30_GetWindowWMInfo(_THIS, SDL_Window *window, struct SDL_SysWMinfo *info)
 {
-    if (info->version.major <= SDL_MAJOR_VERSION) {
-        return SDL_TRUE;
-    } else {
-        SDL_SetError("application not compiled with SDL %d.%d\n", SDL_MAJOR_VERSION, SDL_MINOR_VERSION);
-    }
-    return SDL_FALSE;
+    return SDL_TRUE;
 }
 
 void A30_PumpEvents(_THIS)

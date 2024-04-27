@@ -33,11 +33,18 @@
 #define A30_GLES_GetSwapInterval    SDL_EGL_GetSwapInterval
 #define A30_GLES_DeleteContext      SDL_EGL_DeleteContext
 
-extern int A30_GLES_LoadLibrary(_THIS, const char *path);
-extern SDL_GLContext A30_GLES_CreateContext(_THIS, SDL_Window *window);
-extern int A30_GLES_SwapWindow(_THIS, SDL_Window *window);
-extern int A30_GLES_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context);
-extern void A30_GLES_DefaultProfileConfig(_THIS, int *mask, int *major, int *minor);
+typedef struct SDL_GLDriverData {
+    EGLDisplay display;
+    EGLContext context;
+    EGLSurface surface;
+} SDL_GLDriverData;
+
+int A30_GLES_GetConfig(EGLConfig *pconf, int *pformat);
+int A30_GLES_LoadLibrary(_THIS, const char *name);
+int A30_GLES_SwapWindow(_THIS, SDL_Window *window);
+int A30_GLES_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context);
+void A30_GLES_DefaultProfileConfig(_THIS, int *mask, int *major, int *minor);
+SDL_GLContext A30_GLES_CreateContext(_THIS, SDL_Window *window);
 
 #endif
 
