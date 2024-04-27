@@ -38,9 +38,9 @@
 
 #define PREFIX  "[SDL2] "
 #define LCD_W   640
-#define LCD_H   480
-#define REAL_W  LCD_H
-#define REAL_H  LCD_W
+#define LCD_H   640
+#define REAL_W  480
+#define REAL_H  640
 
 typedef struct SDL_DisplayData {
     struct fbdev_window native_display;

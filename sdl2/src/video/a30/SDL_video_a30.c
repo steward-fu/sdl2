@@ -30,6 +30,8 @@
 #include "SDL_video_a30.h"
 #include "SDL_opengles_a30.h"
 
+int need_screen_rotation_helper = 0;
+
 static void A30_Destroy(SDL_VideoDevice *device)
 {
     if (device->driverdata != NULL) {
@@ -148,7 +150,13 @@ int A30_CreateWindow(_THIS, SDL_Window *window)
     }
     window->w = displaydata->native_display.width;
     window->h = displaydata->native_display.height;
-    window->flags |= SDL_WINDOW_OPENGL;
+
+    need_screen_rotation_helper = 0;
+    if (!(window->flags & SDL_WINDOW_OPENGL)) {
+        need_screen_rotation_helper = 1;
+        window->flags |= SDL_WINDOW_OPENGL;
+    }
+    printf(PREFIX"%s Screen Rotation Helper\n", need_screen_rotation_helper ? "Enabled" : "Disabled");
 
     if (!_this->egl_data) {
         if (SDL_GL_LoadLibrary(NULL) < 0) {

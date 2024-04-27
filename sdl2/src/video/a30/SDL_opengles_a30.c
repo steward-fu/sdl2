@@ -34,9 +34,10 @@ static EGLContext context = 0;
 static EGLSurface surface = 0;
 static EGLConfig config = 0;
 
+extern int need_screen_rotation_helper;
+
 int A30_GLES_LoadLibrary(_THIS, const char *path)
 {
-    printf(PREFIX"%s\n", __func__);
     return SDL_EGL_LoadLibrary(_this, path, EGL_DEFAULT_DISPLAY, 0);
 }
 
@@ -45,7 +46,7 @@ void A30_GLES_DefaultProfileConfig(_THIS, int *mask, int *major, int *minor)
     *mask = SDL_GL_CONTEXT_PROFILE_ES;
     *major = 2;
     *minor = 0;
-    printf(PREFIX"%s\n", __func__);
+    printf(PREFIX"Set OpenGL ES v2.0\n");
 }
 
 SDL_GLContext A30_GLES_CreateContext(_THIS, SDL_Window *window)
@@ -74,7 +75,7 @@ SDL_GLContext A30_GLES_CreateContext(_THIS, SDL_Window *window)
     };
 
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    printf(PREFIX"EGL Display %p\n", display);
+    printf(PREFIX"EGL Display Pointer (%p)\n", display);
     eglInitialize(display, &majorVersion, &minorVersion);
     eglGetConfigs(display, NULL, 0, &numConfigs);
     cfgs = SDL_malloc(numConfigs * sizeof(EGLConfig));
@@ -110,7 +111,7 @@ SDL_GLContext A30_GLES_CreateContext(_THIS, SDL_Window *window)
         break;
     }
     SDL_free(cfgs);
-    printf(PREFIX"EGL Config %p\n", config);
+    printf(PREFIX"EGL Config Pointer (%p)\n", config);
 
     context = eglCreateContext(display, config, EGL_NO_CONTEXT, (EGLint *)&egl_ctx_attr);
     if (context == EGL_NO_CONTEXT) {
@@ -119,26 +120,24 @@ SDL_GLContext A30_GLES_CreateContext(_THIS, SDL_Window *window)
     }
 
     surface = eglCreateWindowSurface(display, config, 0, (EGLint*)&egl_surf_attr);
-    printf(PREFIX"EGL Surface %p\n", surface);
+    printf(PREFIX"EGL Surface Pointer (%p)\n", surface);
     if (surface == EGL_NO_SURFACE) {
         printf(PREFIX"Failed to create EGL surface\n");
         return NULL;
     }
 
     eglMakeCurrent(display, surface, surface, context);
-    printf(PREFIX"EGL Surface is ready\n");
+    printf(PREFIX"Created EGL Surface successfully\n");
     return context;
 }
 
 int A30_GLES_SwapWindow(_THIS, SDL_Window *window)
 {
-    printf(PREFIX"%s\n", __func__);
     return eglSwapBuffers(display, surface) == EGL_TRUE ? 0 : -1;
 }
 
 int A30_GLES_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
 {
-    printf(PREFIX"%s\n", __func__);
     return 0;
 }
 

@@ -143,6 +143,12 @@ extern "C" {
 extern DECLSPEC int SDLCALL SDL_Init(Uint32 flags);
 
 /**
+  * Used the pre-defined shader to rotate gl_Position for Miyoo A30 handheld.
+  *
+  */
+extern DECLSPEC void SDLCALL SDL_RotateGLShaderPosition(int angle);
+
+/**
  * Compatibility function to initialize the SDL library.
  *
  * In SDL2, this function and SDL_Init() are interchangeable.
