@@ -97,12 +97,12 @@ int A30_VideoInit(_THIS)
 
     fd = open("/dev/fb0", O_RDWR, 0);
     if (fd < 0) {
-        return printf(PREFIX"Failed to open framebuffer device");
+        return printf(PREFIX"Failed to open framebuffer device\n");
     }
 
     if (ioctl(fd, FBIOGET_VSCREENINFO, &vinfo) < 0) {
         A30_VideoQuit(_this);
-        return printf(PREFIX"Failed to get framebuffer information");
+        return printf(PREFIX"Failed to get framebuffer information\n");
     }
     close(fd);
 
@@ -169,7 +169,7 @@ int A30_CreateWindow(_THIS, SDL_Window *window)
     windowdata->egl_surface = SDL_EGL_CreateSurface(_this, (NativeWindowType)&displaydata->native_display);
     if (windowdata->egl_surface == EGL_NO_SURFACE) {
         A30_VideoQuit(_this);
-        return printf(PREFIX"Failed to create EGL window surface");
+        return printf(PREFIX"Failed to create EGL window surface\n");
     }
     displaydata->native_display.width = LCD_W;
     displaydata->native_display.height = LCD_H;
