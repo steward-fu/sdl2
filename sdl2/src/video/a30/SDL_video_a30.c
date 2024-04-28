@@ -19,6 +19,18 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+#include <stdlib.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <string.h>
+#include <linux/fb.h>
+#include <sys/mman.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <time.h>
+
 #include "../../SDL_internal.h"
 #include "SDL_version.h"
 #include "SDL_syswm.h"
@@ -30,6 +42,10 @@
 #include "SDL_video_a30.h"
 #include "SDL_opengles_a30.h"
 
+int fb_dev = -1;
+uint32_t *gl_mem = NULL;
+uint32_t *fb_mem = NULL;
+struct fb_var_screeninfo vinfo = {0};
 int need_screen_rotation_helper = 0;
 
 static void A30_Destroy(SDL_VideoDevice *device)
@@ -84,36 +100,57 @@ VideoBootStrap A30_bootstrap = { "a30", "Miyoo A30 Video Driver", A30_CreateDevi
 
 int A30_VideoInit(_THIS)
 {
-    int fd = -1;
-    struct fb_var_screeninfo vinfo = {0};
     SDL_DisplayData *data = NULL;
     SDL_VideoDisplay display = {0};
     SDL_DisplayMode current_mode = {0};
 
+    printf(PREFIX"%s\n", __func__);
     data = (SDL_DisplayData *)SDL_calloc(1, sizeof(SDL_DisplayData));
     if (data == NULL) {
         return SDL_OutOfMemory();
     }
 
-    fd = open("/dev/fb0", O_RDWR, 0);
-    if (fd < 0) {
-        return printf(PREFIX"Failed to open framebuffer device\n");
+    fb_dev = open("/dev/fb0", O_RDWR, 0);
+    if (fb_dev < 0) {
+        printf(PREFIX"Failed to open framebuffer device\n");
+        return -1;
     }
 
-    if (ioctl(fd, FBIOGET_VSCREENINFO, &vinfo) < 0) {
+    if (ioctl(fb_dev, FBIOGET_VSCREENINFO, &vinfo) < 0) {
         A30_VideoQuit(_this);
-        return printf(PREFIX"Failed to get framebuffer information\n");
+        printf(PREFIX"Failed to get framebuffer information\n");
+        return -1;
     }
-    close(fd);
+
+    fb_mem = (uint32_t *)mmap(NULL, FB_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fb_dev, 0);
+    if (fb_mem == (void *)-1) {
+        close(fb_dev);
+        fb_dev = -1;
+        printf(PREFIX"Failed to mmap /dev/fb0\n");
+        return -1;
+    }
+    printf(PREFIX"fb_mem %p\n", fb_mem);
+    memset(fb_mem, 0 , FB_SIZE);
+
+    gl_mem = malloc(GL_SIZE);
+    if (gl_mem == NULL) {
+        printf(PREFIX"Failed to allocate glmem\n");
+        return -1;
+    }
+    printf(PREFIX"gl_mem %p\n", gl_mem);
+    memset(gl_mem, 0 , GL_SIZE);
+
+    vinfo.yres_virtual = vinfo.yres * 2;
+    ioctl(fb_dev, FBIOPUT_VSCREENINFO, &vinfo);
 
     data->native_display.width = LCD_W;
     data->native_display.height = LCD_H;
 
     SDL_zero(current_mode);
-    current_mode.w = LCD_W;
-    current_mode.h = LCD_H;
+    current_mode.w = data->native_display.width;
+    current_mode.h = data->native_display.height;
     current_mode.refresh_rate = 60;
-    current_mode.format = SDL_PIXELFORMAT_ABGR8888;
+    current_mode.format = SDL_PIXELFORMAT_RGBA8888;
     current_mode.driverdata = NULL;
 
     SDL_zero(display);
@@ -126,6 +163,21 @@ int A30_VideoInit(_THIS)
 
 void A30_VideoQuit(_THIS)
 {
+    printf(PREFIX"%s\n", __func__);
+    if (fb_mem) {
+        munmap(fb_mem, FB_SIZE);
+        fb_mem = NULL;
+    }
+
+    if (fb_dev > 0) {
+        close(fb_dev);
+        fb_dev = -1;
+    }
+
+    if (gl_mem) {
+        free(gl_mem);
+        gl_mem = NULL;
+    }
 }
 
 void A30_GetDisplayModes(_THIS, SDL_VideoDisplay *display)

@@ -20,6 +20,20 @@
 */
 #include "../../SDL_internal.h"
 
+#include <stdlib.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <string.h>
+#include <linux/fb.h>
+#include <sys/mman.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <time.h>
+
+#include <EGL/egl.h>
+#include <GLES2/gl2.h>
 #include "SDL_opengles_a30.h"
 #include "SDL_video_a30.h"
 
@@ -29,11 +43,15 @@ SDL_EGL_SwapWindow_impl(A30)
 SDL_EGL_MakeCurrent_impl(A30)
 #endif
 
-static EGLDisplay display = 0;
-static EGLContext context = 0;
-static EGLSurface surface = 0;
-static EGLConfig config = 0;
+static EGLConfig eglConfig = 0;
+static EGLDisplay eglDisplay = 0;
+static EGLContext eglContext = 0;
+static EGLSurface eglSurface = 0;
 
+extern int fb_dev;
+extern uint32_t *gl_mem;
+extern uint32_t *fb_mem;
+extern struct fb_var_screeninfo vinfo;
 extern int need_screen_rotation_helper;
 
 int A30_GLES_LoadLibrary(_THIS, const char *path)
@@ -51,92 +69,85 @@ void A30_GLES_DefaultProfileConfig(_THIS, int *mask, int *major, int *minor)
 
 SDL_GLContext A30_GLES_CreateContext(_THIS, SDL_Window *window)
 {
-    EGLint i = 0;
-    EGLint val = 0;
-    EGLBoolean rc = 0;
-    EGLConfig *cfgs = NULL;
     EGLint numConfigs = 0;
     EGLint majorVersion = 0;
     EGLint minorVersion = 0;
-    struct {
-        EGLint client_version[2];
-        EGLint none;
-    } egl_ctx_attr = {
-        .client_version = { EGL_CONTEXT_CLIENT_VERSION, 2 },
-        .none = EGL_NONE
+    EGLint pbufferAttributes[] ={
+        EGL_WIDTH,  REAL_W,
+        EGL_HEIGHT, REAL_H,
+        EGL_NONE
+    };
+    EGLint configAttribs[] = {
+        EGL_SURFACE_TYPE,    EGL_PBUFFER_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+        EGL_RED_SIZE,   8,
+        EGL_GREEN_SIZE, 8,
+        EGL_BLUE_SIZE,  8,
+        EGL_ALPHA_SIZE, 8,
+        EGL_NONE
+    };
+    EGLint contextAttribs[] = {
+        EGL_CONTEXT_CLIENT_VERSION, 2,
+        EGL_NONE
     };
 
-    struct {
-        EGLint render_buffer[2];
-        EGLint none;
-    } egl_surf_attr = {
-        .render_buffer = { EGL_RENDER_BUFFER, EGL_BACK_BUFFER },
-        .none = EGL_NONE
-    };
-
-    display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    printf(PREFIX"EGL Display Pointer (%p)\n", display);
-    eglInitialize(display, &majorVersion, &minorVersion);
-    eglGetConfigs(display, NULL, 0, &numConfigs);
-    cfgs = SDL_malloc(numConfigs * sizeof(EGLConfig));
-    if (cfgs == NULL) {
-        printf(PREFIX"Failed to allocate memory for EGL config\n");
+    eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    eglInitialize(eglDisplay, &majorVersion, &minorVersion);
+    eglChooseConfig(eglDisplay, configAttribs, &eglConfig, 1, &numConfigs);
+    eglContext = eglCreateContext(eglDisplay, eglConfig, EGL_NO_CONTEXT, contextAttribs);
+    if (eglContext == EGL_NO_CONTEXT) {
+        printf(PREFIX"Failed to create EGL eglContext\n");
         return NULL;
     }
 
-    rc = eglGetConfigs(display, cfgs, numConfigs, &numConfigs);
-    if (rc != EGL_TRUE) {
-        SDL_free(cfgs);
-        printf(PREFIX"Failed to get EGL config\n");
+    eglSurface = eglCreatePbufferSurface(eglDisplay, eglConfig, pbufferAttributes);
+    if (eglSurface == EGL_NO_SURFACE) {
+        printf(PREFIX"Failed to create EGL eglSurface\n");
         return NULL;
     }
 
-    for (i = 0; i < numConfigs; i++) {
-        eglGetConfigAttrib(display, cfgs[i], EGL_SURFACE_TYPE, &val);
-        if (!(val & EGL_WINDOW_BIT)) {
-            continue;
-        }
-
-        eglGetConfigAttrib(display, cfgs[i], EGL_RENDERABLE_TYPE, &val);
-        if (!(val & EGL_OPENGL_ES2_BIT)) {
-            continue;
-        }
-
-        eglGetConfigAttrib(display, cfgs[i], EGL_DEPTH_SIZE, &val);
-        if (val == 0) {
-            continue;
-        }
-
-        config = cfgs[i];
-        break;
-    }
-    SDL_free(cfgs);
-    printf(PREFIX"EGL Config Pointer (%p)\n", config);
-
-    context = eglCreateContext(display, config, EGL_NO_CONTEXT, (EGLint *)&egl_ctx_attr);
-    if (context == EGL_NO_CONTEXT) {
-        printf(PREFIX"Failed to create EGL context\n");
-        return NULL;
-    }
-
-    surface = eglCreateWindowSurface(display, config, 0, (EGLint*)&egl_surf_attr);
-    printf(PREFIX"EGL Surface Pointer (%p)\n", surface);
-    if (surface == EGL_NO_SURFACE) {
-        printf(PREFIX"Failed to create EGL surface\n");
-        return NULL;
-    }
-
-    eglMakeCurrent(display, surface, surface, context);
+    eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext);
     printf(PREFIX"Created EGL Surface successfully\n");
-    return context;
+    return eglContext;
 }
 
 int A30_GLES_SwapWindow(_THIS, SDL_Window *window)
 {
-    return eglSwapBuffers(display, surface) == EGL_TRUE ? 0 : -1;
+    static int cc = 0;
+
+    int x = 0;
+    int y = 0;
+    int ret = 0;
+    uint32_t v = 0;
+    uint32_t *src = gl_mem;
+    uint32_t *dst = fb_mem + (640 * 480 * (cc % 2));
+
+    eglSwapBuffers(eglDisplay, eglSurface);
+    glReadPixels(0, 0, REAL_W, REAL_H, GL_RGBA, GL_UNSIGNED_BYTE, gl_mem);
+    if (need_screen_rotation_helper) {
+        for (y = 0; y < 640; y++) {
+            for (x = 0; x < 480; x++) {
+                v = *src++;
+                dst[((639 - y) * 480) + x] = 0xff000000 | ((v & 0xff) << 16) | (v & 0xff00) | ((v & 0xff0000) >> 16);
+            }
+        }
+    }
+    else {
+        for (y = 0; y < 640; y++) {
+            for (x = 0; x < 480; x++) {
+                v = *src++;
+                dst[((639 - x) * 480) + (639 - y - 60)] = 0xff000000 | ((v & 0xff) << 16) | (v & 0xff00) | ((v & 0xff0000) >> 16);
+            }
+        }
+    }
+    vinfo.yoffset = (cc % 2) * vinfo.yres;
+    ioctl(fb_dev, FBIOPAN_DISPLAY, &vinfo);
+    ioctl(fb_dev, FBIO_WAITFORVSYNC, &ret);
+    cc += 1;
+    return 0;
 }
 
-int A30_GLES_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
+int A30_GLES_MakeCurrent(_THIS, SDL_Window *window, SDL_GLContext eglContext)
 {
     return 0;
 }

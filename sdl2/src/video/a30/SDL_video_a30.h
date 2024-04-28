@@ -36,11 +36,13 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#define PREFIX  "[SDL2] "
-#define LCD_W   640
-#define LCD_H   640
-#define REAL_W  480
-#define REAL_H  640
+#define PREFIX      "[SDL2] "
+#define LCD_W       640
+#define LCD_H       640
+#define REAL_W      480
+#define REAL_H      640
+#define GL_SIZE     (640 * 640 * 4)
+#define FB_SIZE     (640 * 480 * 4 * 2)
 
 typedef struct SDL_DisplayData {
     struct fbdev_window native_display;
