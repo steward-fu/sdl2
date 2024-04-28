@@ -73,8 +73,8 @@ SDL_GLContext A30_GLES_CreateContext(_THIS, SDL_Window *window)
     EGLint majorVersion = 0;
     EGLint minorVersion = 0;
     EGLint pbufferAttributes[] ={
-        EGL_WIDTH,  REAL_W,
-        EGL_HEIGHT, REAL_H,
+        EGL_WIDTH,  LCD_W,
+        EGL_HEIGHT, LCD_H,
         EGL_NONE
     };
     EGLint configAttribs[] = {
@@ -123,8 +123,8 @@ int A30_GLES_SwapWindow(_THIS, SDL_Window *window)
     uint32_t *dst = fb_mem + (640 * 480 * (cc % 2));
 
     eglSwapBuffers(eglDisplay, eglSurface);
-    glReadPixels(0, 0, REAL_W, REAL_H, GL_RGBA, GL_UNSIGNED_BYTE, gl_mem);
     if (need_screen_rotation_helper) {
+        glReadPixels(0, 0, REAL_W, REAL_H, GL_RGBA, GL_UNSIGNED_BYTE, gl_mem);
         for (y = 0; y < 640; y++) {
             for (x = 0; x < 480; x++) {
                 v = *src++;
@@ -133,10 +133,11 @@ int A30_GLES_SwapWindow(_THIS, SDL_Window *window)
         }
     }
     else {
-        for (y = 0; y < 640; y++) {
-            for (x = 0; x < 480; x++) {
-                v = *src++;
-                dst[((639 - x) * 480) + (639 - y - 60)] = 0xff000000 | ((v & 0xff) << 16) | (v & 0xff00) | ((v & 0xff0000) >> 16);
+        glReadPixels(0, 0, 640, 640, GL_RGBA, GL_UNSIGNED_BYTE, gl_mem);
+        for (y = 0; y < 480; y++) {
+            for (x = 0; x < 640; x++) {
+                v = src[((y + ((640 - 480) / 2)) * 640) + x];
+                dst[((639 - x) * 480) + (479 - y)] = 0xff000000 | ((v & 0xff) << 16) | (v & 0xff00) | ((v & 0xff0000) >> 16);
             }
         }
     }
