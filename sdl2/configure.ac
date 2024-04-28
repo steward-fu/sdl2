@@ -4035,6 +4035,11 @@ case "$host" in
                 SOURCES="$SOURCES $srcdir/src/joystick/mmiyoo/*.c"
                 have_joystick=yes
             ;;
+            a30|unittest)
+                AC_DEFINE(SDL_JOYSTICK_A30, 1, [ ])
+                SOURCES="$SOURCES $srcdir/src/joystick/a30/*.c"
+                have_joystick=yes
+            ;;
           esac
         fi
         # Set up files for the haptic library

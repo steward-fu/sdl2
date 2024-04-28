@@ -52,6 +52,10 @@ typedef struct SDL_WindowData {
     EGLSurface egl_surface;
 } SDL_WindowData;
 
+typedef struct A30_VideoInfo {
+    SDL_Window *window;
+} A30_VideoInfo;
+
 int A30_VideoInit(_THIS);
 int A30_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode);
 int A30_CreateWindow(_THIS, SDL_Window * window);

@@ -39,6 +39,7 @@
 #include "../SDL_sysvideo.h"
 #include "../../events/SDL_events_c.h"
 
+#include "SDL_event_a30.h"
 #include "SDL_video_a30.h"
 #include "SDL_opengles_a30.h"
 
@@ -47,6 +48,7 @@ uint32_t *gl_mem = NULL;
 uint32_t *fb_mem = NULL;
 struct fb_var_screeninfo vinfo = {0};
 int need_screen_rotation_helper = 0;
+A30_VideoInfo vid = {0};
 
 static void A30_Destroy(SDL_VideoDevice *device)
 {
@@ -158,6 +160,8 @@ int A30_VideoInit(_THIS)
     display.current_mode = current_mode;
     display.driverdata = data;
     SDL_AddVideoDisplay(&display, SDL_FALSE);
+
+    A30_EventInit();
     return 0;
 }
 
@@ -226,6 +230,7 @@ int A30_CreateWindow(_THIS, SDL_Window *window)
     displaydata->native_display.width = LCD_W;
     displaydata->native_display.height = LCD_H;
 
+    vid.window = window;
     window->driverdata = windowdata;
     SDL_SetMouseFocus(window);
     SDL_SetKeyboardFocus(window);
@@ -270,9 +275,5 @@ void A30_HideWindow(_THIS, SDL_Window *window)
 SDL_bool A30_GetWindowWMInfo(_THIS, SDL_Window *window, struct SDL_SysWMinfo *info)
 {
     return SDL_TRUE;
-}
-
-void A30_PumpEvents(_THIS)
-{
 }
 
