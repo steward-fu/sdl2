@@ -43,15 +43,13 @@ SDL_EGL_SwapWindow_impl(A30)
 SDL_EGL_MakeCurrent_impl(A30)
 #endif
 
-static EGLConfig eglConfig = 0;
-static EGLDisplay eglDisplay = 0;
-static EGLContext eglContext = 0;
-static EGLSurface eglSurface = 0;
+EGLConfig eglConfig = 0;
+EGLDisplay eglDisplay = 0;
+EGLContext eglContext = 0;
+EGLSurface eglSurface = 0;
 
-extern int fb_dev;
+extern int fb_flip;
 extern uint32_t *gl_mem;
-extern uint32_t *fb_mem;
-extern struct fb_var_screeninfo vinfo;
 extern int need_screen_rotation_helper;
 
 int A30_GLES_LoadLibrary(_THIS, const char *path)
@@ -113,38 +111,13 @@ SDL_GLContext A30_GLES_CreateContext(_THIS, SDL_Window *window)
 
 int A30_GLES_SwapWindow(_THIS, SDL_Window *window)
 {
-    static int cc = 0;
+    int w = need_screen_rotation_helper ? REAL_W : LCD_W;
+    int h = need_screen_rotation_helper ? REAL_H : LCD_H;
 
-    int x = 0;
-    int y = 0;
-    int ret = 0;
-    uint32_t v = 0;
-    uint32_t *src = gl_mem;
-    uint32_t *dst = fb_mem + (640 * 480 * (cc % 2));
-
+    glFinish();
     eglSwapBuffers(eglDisplay, eglSurface);
-    if (need_screen_rotation_helper) {
-        glReadPixels(0, 0, REAL_W, REAL_H, GL_RGBA, GL_UNSIGNED_BYTE, gl_mem);
-        for (y = 0; y < 640; y++) {
-            for (x = 0; x < 480; x++) {
-                v = *src++;
-                dst[((639 - y) * 480) + x] = 0xff000000 | ((v & 0xff) << 16) | (v & 0xff00) | ((v & 0xff0000) >> 16);
-            }
-        }
-    }
-    else {
-        glReadPixels(0, 0, 640, 640, GL_RGBA, GL_UNSIGNED_BYTE, gl_mem);
-        for (y = 0; y < 480; y++) {
-            for (x = 0; x < 640; x++) {
-                v = src[((y + ((640 - 480) / 2)) * 640) + x];
-                dst[((639 - x) * 480) + (479 - y)] = 0xff000000 | ((v & 0xff) << 16) | (v & 0xff00) | ((v & 0xff0000) >> 16);
-            }
-        }
-    }
-    vinfo.yoffset = (cc % 2) * vinfo.yres;
-    ioctl(fb_dev, FBIOPAN_DISPLAY, &vinfo);
-    ioctl(fb_dev, FBIO_WAITFORVSYNC, &ret);
-    cc += 1;
+    glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, gl_mem);
+    fb_flip = 1;
     return 0;
 }
 

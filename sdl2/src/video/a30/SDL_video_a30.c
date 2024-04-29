@@ -30,7 +30,10 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <time.h>
+#include <pthread.h>
 
+#include <EGL/egl.h>
+#include <GLES2/gl2.h>
 #include "../../SDL_internal.h"
 #include "SDL_version.h"
 #include "SDL_syswm.h"
@@ -43,12 +46,64 @@
 #include "SDL_video_a30.h"
 #include "SDL_opengles_a30.h"
 
+static int running = 0;
+static pthread_t thread = 0;
+
+int fb_flip = 0;
 int fb_dev = -1;
 uint32_t *gl_mem = NULL;
 uint32_t *fb_mem = NULL;
 struct fb_var_screeninfo vinfo = {0};
 int need_screen_rotation_helper = 0;
 A30_VideoInfo vid = {0};
+
+extern EGLConfig eglConfig;
+extern EGLDisplay eglDisplay;
+extern EGLContext eglContext;
+extern EGLSurface eglSurface;
+
+void* video_handler(void *data)
+{
+    static int frame = 0;
+
+    int x = 0;
+    int y = 0;
+    int ret = 0;
+    uint32_t v = 0;
+
+    while (running) {
+        if (fb_flip) {
+            uint32_t *src = gl_mem;
+            uint32_t *dst = fb_mem + (640 * 480 * (frame % 2));
+
+            fb_flip = 0;
+            if (need_screen_rotation_helper) {
+                for (y = 0; y < 640; y++) {
+                    for (x = 0; x < 480; x++) {
+                        v = *src++;
+                        dst[((639 - y) * 480) + x] = 0xff000000 | ((v & 0xff) << 16) | (v & 0xff00) | ((v & 0xff0000) >> 16);
+                    }
+                }
+            }
+            else {
+                for (y = 0; y < 480; y++) {
+                    for (x = 0; x < 640; x++) {
+                        v = src[((y + ((640 - 480) / 2)) * 640) + x];
+                        dst[((639 - x) * 480) + (479 - y)] = 0xff000000 | ((v & 0xff) << 16) | (v & 0xff00) | ((v & 0xff0000) >> 16);
+                    }
+                }
+            }
+            vinfo.yoffset = (frame % 2) * vinfo.yres;
+            ioctl(fb_dev, FBIOPAN_DISPLAY, &vinfo);
+            ioctl(fb_dev, FBIO_WAITFORVSYNC, &ret);
+            frame += 1;
+        }
+        else {
+            usleep(10);
+        }
+    }
+    return NULL;
+}
 
 static void A30_Destroy(SDL_VideoDevice *device)
 {
@@ -162,12 +217,19 @@ int A30_VideoInit(_THIS)
     SDL_AddVideoDisplay(&display, SDL_FALSE);
 
     A30_EventInit();
+
+    running = 1;
+    pthread_create(&thread, NULL, video_handler, NULL);
     return 0;
 }
 
 void A30_VideoQuit(_THIS)
 {
     printf(PREFIX"%s\n", __func__);
+
+    running = 0;
+    pthread_join(thread, NULL);
+
     if (fb_mem) {
         munmap(fb_mem, FB_SIZE);
         fb_mem = NULL;
