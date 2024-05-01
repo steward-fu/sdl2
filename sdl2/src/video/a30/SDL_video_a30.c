@@ -204,8 +204,8 @@ int A30_VideoInit(_THIS)
     data->native_display.height = LCD_H;
 
     SDL_zero(current_mode);
-    current_mode.w = data->native_display.width;
-    current_mode.h = data->native_display.height;
+    current_mode.w = 640; //data->native_display.width;
+    current_mode.h = 480; //data->native_display.height;
     current_mode.refresh_rate = 60;
     current_mode.format = SDL_PIXELFORMAT_RGBA8888;
     current_mode.driverdata = NULL;

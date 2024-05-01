@@ -45,7 +45,7 @@ static const Uint8 GLES2_Vertex_Default_90D[] = " \
         mat4 sca = mat4((480.0 / 640.0), 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0); \
         mat4 tra = mat4(1.0, 0.0, 0.0, -(1.0 - (480.0 / 640.0)), 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0); \
         v_texCoord = a_texCoord; \
-        gl_Position = u_projection * vec4(a_position, 0.0, 1.0) * rot * sca * tra; \
+        gl_Position = u_projection * vec4(a_position, 0.0, 1.0) * rot; \
         gl_PointSize = 1.0; \
         v_color = a_color; \
     } \
@@ -357,7 +357,7 @@ const Uint8 *GLES2_GetShader(GLES2_ShaderType type)
 {
     switch(type) {
     case GLES2_SHADER_VERTEX_DEFAULT:
-        return used_rotation_helpder ? GLES2_Vertex_Default_90D : GLES2_Vertex_Default;
+        return need_screen_rotation_helper ? GLES2_Vertex_Default_90D : GLES2_Vertex_Default;
     case GLES2_SHADER_FRAGMENT_SOLID:
         return GLES2_Fragment_Solid;
     case GLES2_SHADER_FRAGMENT_TEXTURE_ABGR:

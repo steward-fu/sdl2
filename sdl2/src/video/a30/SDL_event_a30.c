@@ -46,12 +46,12 @@
 #define B       29
 #define X       42
 #define Y       56
-#define L1      18
-#define L2      15
+#define L1      15
+#define L2      18
 #define R1      14
 #define R2      20
-#define START   28
 #define SELECT  97
+#define START   28
 #define MENU    1
 #define VOLUP   115
 #define VOLDOWN 114
@@ -72,22 +72,17 @@ const SDL_Scancode code[]={
     SDLK_DOWN,          // DOWN
     SDLK_LEFT,          // LEFT
     SDLK_RIGHT,         // RIGHT
-    SDLK_SPACE,         // A
-    SDLK_LCTRL,         // B
-    SDLK_LSHIFT,        // X
-    SDLK_LALT,          // Y
-    SDLK_e,             // L1
-    SDLK_t,             // R1
-    SDLK_TAB,           // L2
-    SDLK_BACKSPACE,     // R2
-    SDLK_RCTRL,         // SELECT
+    SDLK_LCTRL,         // A
+    SDLK_LALT,          // B
+    SDLK_SPACE,         // X
+    SDLK_LSHIFT,        // Y
+    SDLK_TAB,           // L1
+    SDLK_BACKSPACE,     // R1
+    SDLK_PAGEUP,        // L2
+    SDLK_PAGEDOWN,      // R2
+    SDLK_ESCAPE,        // SELECT
     SDLK_RETURN,        // START
     SDLK_HOME,          // MENU
-    SDLK_0,             // QUICK SAVE
-    SDLK_1,             // QUICK LOAD
-    SDLK_2,             // FAST FORWARD
-    SDLK_3,             // EXIT
-    SDLK_HOME,          // MENU (Onion system)
 };
 
 static void check_mouse_pos(void)
@@ -174,6 +169,7 @@ int EventUpdate(void *data)
         if (event_fd > 0) {
             if (read(event_fd, &ev, sizeof(struct input_event))) {
                 if ((ev.type == EV_KEY) && (ev.value != 2)) {
+                    //printf("code:%d, value:%d\n", ev.code, ev.value);
                     if (ev.code == l1)      { set_key(MYKEY_L1,    ev.value); }
                     if (ev.code == r1)      { set_key(MYKEY_R1,    ev.value); }
                     if (ev.code == l2)      { set_key(MYKEY_L2,    ev.value); }
