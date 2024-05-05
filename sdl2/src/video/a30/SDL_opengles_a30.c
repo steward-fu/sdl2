@@ -111,13 +111,17 @@ SDL_GLContext A30_GLES_CreateContext(_THIS, SDL_Window *window)
 
 int A30_GLES_SwapWindow(_THIS, SDL_Window *window)
 {
+    static int fps = 0;
     int w = need_screen_rotation_helper ? REAL_W : LCD_W;
     int h = need_screen_rotation_helper ? REAL_H : LCD_H;
 
     glFinish();
     eglSwapBuffers(eglDisplay, eglSurface);
-    glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, gl_mem);
-    fb_flip = 1;
+    if (fps % 2) {
+        glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, gl_mem);
+        fb_flip = 1;
+    }
+    fps += 1;
     return 0;
 }
 
