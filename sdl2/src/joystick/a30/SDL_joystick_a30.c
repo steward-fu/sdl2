@@ -496,7 +496,66 @@ void A30_JoystickUpdate(SDL_Joystick *joystick)
     static int pre_left = 0;
     static int pre_right = 0;
 
-    if (joystick) {
+    //printf(PREFIX"%s\n", __func__);
+    if (joystick == 0) {
+        uint32_t u_key = SDLK_0;
+        uint32_t d_key = SDLK_1;
+        uint32_t l_key = SDLK_2;
+        uint32_t r_key = SDLK_3;
+
+        if (g_lastX != pre_x) {
+            pre_x = g_lastX;
+            if (pre_x < -50) {
+                if (pre_left == 0) {
+                    pre_left = 1;
+                    SDL_SendKeyboardKey(SDL_PRESSED, SDL_GetScancodeFromKey(l_key));
+                }
+            }
+            else if (pre_x > 50){
+                if (pre_right == 0) {
+                    pre_right = 1;
+                    SDL_SendKeyboardKey(SDL_PRESSED, SDL_GetScancodeFromKey(r_key));
+                }
+            }
+            else {
+                if (pre_left != 0) {
+                    pre_left = 0;
+                    SDL_SendKeyboardKey(SDL_RELEASED, SDL_GetScancodeFromKey(l_key));
+                }
+                if (pre_right != 0) {
+                    pre_right = 0;
+                    SDL_SendKeyboardKey(SDL_RELEASED, SDL_GetScancodeFromKey(r_key));
+                }
+            }
+        }
+
+        if (g_lastY != pre_y) {
+            pre_y = g_lastY;
+            if (pre_y < -50) {
+                if (pre_up == 0) {
+                    pre_up = 1;
+                    SDL_SendKeyboardKey(SDL_PRESSED, SDL_GetScancodeFromKey(u_key));
+                }
+            }
+            else if (pre_y > 50){
+                if (pre_down == 0) {
+                    pre_down = 1;
+                    SDL_SendKeyboardKey(SDL_PRESSED, SDL_GetScancodeFromKey(d_key));
+                }
+            }
+            else {
+                if (pre_up != 0) {
+                    pre_up = 0;
+                    SDL_SendKeyboardKey(SDL_RELEASED, SDL_GetScancodeFromKey(u_key));
+                }
+                if (pre_down != 0) {
+                    pre_down = 0;
+                    SDL_SendKeyboardKey(SDL_RELEASED, SDL_GetScancodeFromKey(d_key));
+                }
+            }
+        }
+    }
+    else {
         if (g_lastX != pre_x) {
             pre_x = g_lastX;
             SDL_PrivateJoystickAxis(joystick, 0, pre_x);
@@ -507,59 +566,6 @@ void A30_JoystickUpdate(SDL_Joystick *joystick)
             pre_y = g_lastY;
             SDL_PrivateJoystickAxis(joystick, 1, pre_x);
             printf("Y %d\n", pre_y);
-        }
-    }
-    else {
-        if (g_lastX != pre_x) {
-            pre_x = g_lastX;
-            if (pre_x < -50) {
-                if (pre_left == 0) {
-                    pre_left = 1;
-                    SDL_SendKeyboardKey(SDL_PRESSED, SDL_GetScancodeFromKey(SDLK_LEFT));
-                }
-            }
-            else if (pre_x > 50){
-                if (pre_right == 0) {
-                    pre_right = 1;
-                    SDL_SendKeyboardKey(SDL_PRESSED, SDL_GetScancodeFromKey(SDLK_RIGHT));
-                }
-            }
-            else {
-                if (pre_left != 0) {
-                    pre_left = 0;
-                    SDL_SendKeyboardKey(SDL_RELEASED, SDL_GetScancodeFromKey(SDLK_LEFT));
-                }
-                if (pre_right != 0) {
-                    pre_right = 0;
-                    SDL_SendKeyboardKey(SDL_RELEASED, SDL_GetScancodeFromKey(SDLK_RIGHT));
-                }
-            }
-        }
-
-        if (g_lastY != pre_y) {
-            pre_y = g_lastY;
-            if (pre_y < -50) {
-                if (pre_up == 0) {
-                    pre_up = 1;
-                    SDL_SendKeyboardKey(SDL_PRESSED, SDL_GetScancodeFromKey(SDLK_UP));
-                }
-            }
-            else if (pre_y > 50){
-                if (pre_down == 0) {
-                    pre_down = 1;
-                    SDL_SendKeyboardKey(SDL_PRESSED, SDL_GetScancodeFromKey(SDLK_DOWN));
-                }
-            }
-            else {
-                if (pre_up != 0) {
-                    pre_up = 0;
-                    SDL_SendKeyboardKey(SDL_RELEASED, SDL_GetScancodeFromKey(SDLK_UP));
-                }
-                if (pre_down != 0) {
-                    pre_down = 0;
-                    SDL_SendKeyboardKey(SDL_RELEASED, SDL_GetScancodeFromKey(SDLK_DOWN));
-                }
-            }
         }
     }
     //SDL_PrivateJoystickButton(joystick, 0, s ? SDL_PRESSED : SDL_RELEASED);
