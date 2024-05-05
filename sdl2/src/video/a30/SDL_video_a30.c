@@ -62,34 +62,55 @@ extern EGLDisplay eglDisplay;
 extern EGLContext eglContext;
 extern EGLSurface eglSurface;
 
+static uint32_t LUT_RT[640 * 480] = {0};
+static uint32_t LUT_GL[640 * 480] = {0};
+
 void* video_handler(void *data)
 {
     static int frame = 0;
 
     int x = 0;
     int y = 0;
+    int idx = 0;
     int ret = 0;
     uint32_t v = 0;
+    uint32_t *src = NULL;
+    uint32_t *dst = NULL;
+
+    v = 0;
+    for (y = 0; y < 640; y++) {
+        for (x = 0; x < 480; x++) {
+            LUT_RT[v++] = ((639 - y) * 480) + x;
+        }
+    }
+
+    v = 0;
+    for (y = 0; y < 480; y++) {
+        for (x = 0; x < 640; x++) {
+            LUT_GL[v++] = ((639 - x) * 480) + (479 - y);
+        }
+    }
 
     while (running) {
         if (fb_flip) {
-            uint32_t *src = gl_mem;
-            uint32_t *dst = fb_mem + (640 * 480 * (frame % 2));
-
+            idx = 0;
             fb_flip = 0;
+            src = gl_mem;
+            dst = fb_mem + (640 * 480 * (frame % 2));
+
             if (need_screen_rotation_helper) {
                 for (y = 0; y < 640; y++) {
                     for (x = 0; x < 480; x++) {
                         v = *src++;
-                        dst[((639 - y) * 480) + x] = 0xff000000 | ((v & 0xff) << 16) | (v & 0xff00) | ((v & 0xff0000) >> 16);
+                        dst[LUT_RT[idx++]] = 0xff000000 | ((v & 0xff) << 16) | (v & 0xff00) | ((v & 0xff0000) >> 16);
                     }
                 }
             }
             else {
                 for (y = 0; y < 480; y++) {
                     for (x = 0; x < 640; x++) {
-                        v = src[((y + ((640 - 480) / 2)) * 640) + x];
-                        dst[((639 - x) * 480) + (479 - y)] = 0xff000000 | ((v & 0xff) << 16) | (v & 0xff00) | ((v & 0xff0000) >> 16);
+                        v = *src++;
+                        dst[LUT_GL[idx++]] = 0xff000000 | ((v & 0xff) << 16) | (v & 0xff00) | ((v & 0xff0000) >> 16);
                     }
                 }
             }
