@@ -62,6 +62,7 @@ void A30_GLES_DefaultProfileConfig(_THIS, int *mask, int *major, int *minor)
     *mask = SDL_GL_CONTEXT_PROFILE_ES;
     *major = 2;
     *minor = 0;
+    printf(PREFIX"Build %s %s\n", __DATE__, __TIME__);
     printf(PREFIX"Set OpenGL ES v2.0\n");
 }
 
@@ -117,7 +118,7 @@ int A30_GLES_SwapWindow(_THIS, SDL_Window *window)
 
     glFinish();
     eglSwapBuffers(eglDisplay, eglSurface);
-    if (fps % 2) {
+    if ((fps % 3) == 0) {
         glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, gl_mem);
         fb_flip = 1;
     }

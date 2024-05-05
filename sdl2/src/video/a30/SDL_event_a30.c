@@ -85,6 +85,8 @@ const SDL_Scancode code[]={
     SDLK_ESCAPE,        // MENU
 };
 
+void A30_JoystickUpdate(SDL_Joystick *joystick);
+
 static void check_mouse_pos(void)
 {
     if (evt.mouse.y < evt.mouse.miny) {
@@ -199,6 +201,8 @@ int EventUpdate(void *data)
         }
         SDL_SemPost(event_sem);
         usleep(1000000 / 60);
+
+        //A30_JoystickUpdate(NULL);
     }
     
     return 0;
@@ -224,13 +228,13 @@ void A30_EventInit(void)
     event_sem = SDL_CreateSemaphore(1);
     if(event_sem == NULL) {
         printf(PREFIX"Failed to create input semaphore");
-        return;
     }
 
-    running = 1;
-    if((thread = SDL_CreateThreadInternal(EventUpdate, "A30InputThread", 4096, NULL)) == NULL) {
-        printf(PREFIX"Failed to create input thread");
-        return;
+    if (event_sem != NULL) {
+        running = 1;
+        if((thread = SDL_CreateThreadInternal(EventUpdate, "A30InputThread", 4096, NULL)) == NULL) {
+            printf(PREFIX"Failed to create input thread");
+        }
     }
 }
 
