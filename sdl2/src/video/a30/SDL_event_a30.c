@@ -77,12 +77,12 @@ const SDL_Scancode code[]={
     SDLK_SPACE,         // X
     SDLK_LSHIFT,        // Y
     SDLK_TAB,           // L1
-    SDLK_BACKSPACE,     // R1
-    SDLK_PAGEUP,        // L2
-    SDLK_PAGEDOWN,      // R2
-    SDLK_ESCAPE,        // SELECT
+    SDLK_e,             // R1
+    SDLK_TAB,           // L2
+    SDLK_BACKSPACE,     // R2
+    SDLK_RCTRL,         // SELECT
     SDLK_RETURN,        // START
-    SDLK_HOME,          // MENU
+    SDLK_ESCAPE,        // MENU
 };
 
 static void check_mouse_pos(void)
