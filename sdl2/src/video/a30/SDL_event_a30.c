@@ -76,7 +76,7 @@ const SDL_Scancode code[]={
     SDLK_LALT,          // B
     SDLK_SPACE,         // X
     SDLK_LSHIFT,        // Y
-    SDLK_TAB,           // L1
+    SDLK_t,             // L1
     SDLK_e,             // R1
     SDLK_TAB,           // L2
     SDLK_BACKSPACE,     // R2
