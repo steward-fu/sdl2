@@ -35,6 +35,7 @@
 #include <stropts.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <EGL/fbdev_window.h>
 
 #define PREFIX      "[SDL2] "
 #define LCD_W       640

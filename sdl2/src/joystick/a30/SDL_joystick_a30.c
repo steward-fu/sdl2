@@ -86,6 +86,8 @@ static int32_t s_miyoo_axis_last[MIYOO_AXIS_MAX_COUNT] = {0};
 static int running = 0;
 static SDL_Thread *thread = NULL;
 
+extern SDL_Window *win;
+
 int uart_open(const char *port)
 {
     int fd = -1;
@@ -555,17 +557,49 @@ void A30_JoystickUpdate(SDL_Joystick *joystick)
             }
         }
     }
+    else if (joystick == (SDL_Joystick *)1) {
+        static int xx = 320 / 2;
+        static int yy = 240 / 2;
+
+        pre_x = g_lastX;
+        if (pre_x < -50) {
+            if (xx > 0) {
+                xx -= 3;
+            }
+        }
+        if (pre_x > 50) {
+            if (xx < 320) {
+                xx += 3;
+            }
+        }
+        pre_y = g_lastY;
+        if (pre_y < -50) {
+            if (yy > 0) {
+                yy -= 3;
+            }
+        }
+        if (pre_y > 50) {
+            if (yy < 240) {
+                yy += 3;
+            }
+        }
+
+        if (xx || yy) {
+            SDL_SendMouseMotion(win, 0, 0, xx, yy);
+            //printf(PREFIX"%d, %d\n", xx, yy);
+        }
+    }
     else {
         if (g_lastX != pre_x) {
             pre_x = g_lastX;
             SDL_PrivateJoystickAxis(joystick, 0, pre_x);
-            printf("X %d\n", pre_x);
+            //printf("X %d\n", pre_x);
         }
 
         if (g_lastY != pre_y) {
             pre_y = g_lastY;
             SDL_PrivateJoystickAxis(joystick, 1, pre_x);
-            printf("Y %d\n", pre_y);
+            //printf("Y %d\n", pre_y);
         }
     }
     //SDL_PrivateJoystickButton(joystick, 0, s ? SDL_PRESSED : SDL_RELEASED);

@@ -202,8 +202,8 @@ int EventUpdate(void *data)
         SDL_SemPost(event_sem);
         usleep(1000000 / 60);
 
-        if (0) {
-            A30_JoystickUpdate(0);
+        if (1) {
+            A30_JoystickUpdate(1);
         }
     }
     

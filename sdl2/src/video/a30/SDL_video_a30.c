@@ -65,6 +65,8 @@ extern EGLSurface eglSurface;
 static uint32_t LUT_RT[640 * 480] = {0};
 static uint32_t LUT_GL[640 * 480] = {0};
 
+SDL_Window *win = NULL;
+
 void* video_handler(void *data)
 {
     static int frame = 0;
@@ -282,6 +284,7 @@ int A30_CreateWindow(_THIS, SDL_Window *window)
     SDL_WindowData *windowdata = NULL;
     SDL_DisplayData *displaydata = NULL;
 
+    win = window;
     displaydata = SDL_GetDisplayDriverData(0);
     windowdata = (SDL_WindowData *)SDL_calloc(1, sizeof(SDL_WindowData));
     if (windowdata == NULL) {
