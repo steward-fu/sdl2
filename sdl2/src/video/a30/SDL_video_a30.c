@@ -180,9 +180,9 @@ VideoBootStrap A30_bootstrap = { "a30", "Miyoo A30 Video Driver", A30_CreateDevi
 
 int A30_VideoInit(_THIS)
 {
+    SDL_DisplayMode mode = {0};
     SDL_DisplayData *data = NULL;
     SDL_VideoDisplay display = {0};
-    SDL_DisplayMode current_mode = {0};
 
     printf(PREFIX"%s\n", __func__);
     data = (SDL_DisplayData *)SDL_calloc(1, sizeof(SDL_DisplayData));
@@ -226,19 +226,36 @@ int A30_VideoInit(_THIS)
     data->native_display.width = LCD_W;
     data->native_display.height = LCD_H;
 
-    SDL_zero(current_mode);
-    current_mode.w = 640; //data->native_display.width;
-    current_mode.h = 480; //data->native_display.height;
-    current_mode.refresh_rate = 60;
-    current_mode.format = SDL_PIXELFORMAT_RGBA8888;
-    current_mode.driverdata = NULL;
+    SDL_zero(mode);
+    mode.format = SDL_PIXELFORMAT_RGB565;
+    mode.w = 320;
+    mode.h = 240;
+    mode.refresh_rate = 60;
+    SDL_AddDisplayMode(&display, &mode);
 
-    SDL_zero(display);
-    display.desktop_mode = current_mode;
-    display.current_mode = current_mode;
+    SDL_zero(mode);
+    mode.format = SDL_PIXELFORMAT_ARGB8888;
+    mode.w = 320;
+    mode.h = 240;
+    mode.refresh_rate = 60;
+    SDL_AddDisplayMode(&display, &mode);
+
+    SDL_zero(mode);
+    mode.format = SDL_PIXELFORMAT_RGB565;
+    mode.w = 640;
+    mode.h = 480;
+    mode.refresh_rate = 60;
+    SDL_AddDisplayMode(&display, &mode);
+
+    SDL_zero(mode);
+    mode.format = SDL_PIXELFORMAT_ARGB8888;
+    mode.w = 640;
+    mode.h = 480;
+    mode.refresh_rate = 60;
+    SDL_AddDisplayMode(&display, &mode);
+
     display.driverdata = data;
     SDL_AddVideoDisplay(&display, SDL_FALSE);
-
     A30_EventInit();
 
     running = 1;
@@ -284,12 +301,11 @@ int A30_CreateWindow(_THIS, SDL_Window *window)
     SDL_WindowData *windowdata = NULL;
     SDL_DisplayData *displaydata = NULL;
 
-    win = window;
-    displaydata = SDL_GetDisplayDriverData(0);
     windowdata = (SDL_WindowData *)SDL_calloc(1, sizeof(SDL_WindowData));
     if (windowdata == NULL) {
         return SDL_OutOfMemory();
     }
+    displaydata = SDL_GetDisplayDriverData(0);
     window->w = displaydata->native_display.width;
     window->h = displaydata->native_display.height;
 
@@ -316,6 +332,7 @@ int A30_CreateWindow(_THIS, SDL_Window *window)
     displaydata->native_display.width = LCD_W;
     displaydata->native_display.height = LCD_H;
 
+    win = window;
     vid.window = window;
     window->driverdata = windowdata;
     SDL_SetMouseFocus(window);
