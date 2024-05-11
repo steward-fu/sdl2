@@ -66,6 +66,7 @@ int FB_W = 0;
 int FB_H = 0;
 int FB_SIZE = 0;
 int TMP_SIZE = 0;
+int need_screen_rotation_helper = 0;
 
 static pthread_t thread;
 static int is_running = 0;
