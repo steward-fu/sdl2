@@ -43,6 +43,8 @@ SDL_EGL_SwapWindow_impl(A30)
 SDL_EGL_MakeCurrent_impl(A30)
 #endif
 
+#define EGL_USE_PBUF 1
+
 EGLConfig eglConfig = 0;
 EGLDisplay eglDisplay = 0;
 EGLContext eglContext = 0;
@@ -51,7 +53,7 @@ EGLSurface eglSurface = 0;
 extern int fb_flip;
 extern uint32_t *gl_mem;
 extern int need_screen_rotation_helper;
-
+extern SDL_Window *win;
 int A30_GLES_LoadLibrary(_THIS, const char *path)
 {
     return SDL_EGL_LoadLibrary(_this, path, EGL_DEFAULT_DISPLAY, 0);
@@ -71,11 +73,6 @@ SDL_GLContext A30_GLES_CreateContext(_THIS, SDL_Window *window)
     EGLint numConfigs = 0;
     EGLint majorVersion = 0;
     EGLint minorVersion = 0;
-    EGLint pbufferAttributes[] ={
-        EGL_WIDTH,  LCD_W,
-        EGL_HEIGHT, LCD_H,
-        EGL_NONE
-    };
     EGLint configAttribs[] = {
         EGL_SURFACE_TYPE,    EGL_PBUFFER_BIT,
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
@@ -89,6 +86,18 @@ SDL_GLContext A30_GLES_CreateContext(_THIS, SDL_Window *window)
         EGL_CONTEXT_CLIENT_VERSION, 2,
         EGL_NONE
     };
+#if EGL_USE_PBUF
+    EGLint pbufferAttributes[] = {
+        EGL_WIDTH,  LCD_W,
+        EGL_HEIGHT, LCD_H,
+        EGL_NONE
+    };
+#else
+    EGLint windowAttributes[] = {
+        EGL_RENDER_BUFFER, EGL_BACK_BUFFER,
+        EGL_NONE
+    };
+#endif
 
     eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     eglInitialize(eglDisplay, &majorVersion, &minorVersion);
@@ -99,7 +108,13 @@ SDL_GLContext A30_GLES_CreateContext(_THIS, SDL_Window *window)
         return NULL;
     }
 
+#if EGL_USE_PBUF
+    printf(PREFIX"Use EGL PBuffer\n");
     eglSurface = eglCreatePbufferSurface(eglDisplay, eglConfig, pbufferAttributes);
+#else
+    printf(PREFIX"Use EGL Window\n");
+    eglSurface = eglCreateWindowSurface(eglDisplay, eglConfig, 0, windowAttributes);
+#endif
     if (eglSurface == EGL_NO_SURFACE) {
         printf(PREFIX"Failed to create EGL eglSurface\n");
         return NULL;
@@ -113,15 +128,20 @@ SDL_GLContext A30_GLES_CreateContext(_THIS, SDL_Window *window)
 int A30_GLES_SwapWindow(_THIS, SDL_Window *window)
 {
     static int fps = 0;
+#if EGL_USE_PBUF
     int w = need_screen_rotation_helper ? REAL_W : LCD_W;
     int h = need_screen_rotation_helper ? REAL_H : LCD_H;
+#endif
 
     glFinish();
     eglSwapBuffers(eglDisplay, eglSurface);
+
+#if EGL_USE_PBUF
     if ((fps % 3) == 0) {
         glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, gl_mem);
         fb_flip = 1;
     }
+#endif
     fps += 1;
     return 0;
 }
