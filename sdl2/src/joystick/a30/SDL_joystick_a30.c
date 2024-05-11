@@ -32,6 +32,7 @@
 #include "SDL_joystick.h"
 #include "../SDL_sysjoystick.h"
 #include "../SDL_joystick_c.h"
+#include "../../video/a30/SDL_video_a30.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -491,15 +492,20 @@ static int A30_JoystickSetSensorsEnabled(SDL_Joystick *joystick, SDL_bool enable
 
 void A30_JoystickUpdate(SDL_Joystick *joystick)
 {
+    const int LTH = -50;
+    const int RTH = 50;
+    const int UTH = -50;
+    const int DTH = 50;
+
     static int pre_x = -1;
     static int pre_y = -1;
-    static int pre_up = 0;
-    static int pre_down = 0;
-    static int pre_left = 0;
-    static int pre_right = 0;
 
-    //printf(PREFIX"%s\n", __func__);
-    if (joystick == 0) {
+    if (joystick == (SDL_Joystick *)MYJOY_MODE_KEYPAD) {
+        static int pre_up = 0;
+        static int pre_down = 0;
+        static int pre_left = 0;
+        static int pre_right = 0;
+
         uint32_t u_key = SDLK_0;
         uint32_t d_key = SDLK_1;
         uint32_t l_key = SDLK_2;
@@ -507,13 +513,13 @@ void A30_JoystickUpdate(SDL_Joystick *joystick)
 
         if (g_lastX != pre_x) {
             pre_x = g_lastX;
-            if (pre_x < -50) {
+            if (pre_x < LTH) {
                 if (pre_left == 0) {
                     pre_left = 1;
                     SDL_SendKeyboardKey(SDL_PRESSED, SDL_GetScancodeFromKey(l_key));
                 }
             }
-            else if (pre_x > 50){
+            else if (pre_x > RTH){
                 if (pre_right == 0) {
                     pre_right = 1;
                     SDL_SendKeyboardKey(SDL_PRESSED, SDL_GetScancodeFromKey(r_key));
@@ -533,13 +539,13 @@ void A30_JoystickUpdate(SDL_Joystick *joystick)
 
         if (g_lastY != pre_y) {
             pre_y = g_lastY;
-            if (pre_y < -50) {
+            if (pre_y < UTH) {
                 if (pre_up == 0) {
                     pre_up = 1;
                     SDL_SendKeyboardKey(SDL_PRESSED, SDL_GetScancodeFromKey(u_key));
                 }
             }
-            else if (pre_y > 50){
+            else if (pre_y > DTH){
                 if (pre_down == 0) {
                     pre_down = 1;
                     SDL_SendKeyboardKey(SDL_PRESSED, SDL_GetScancodeFromKey(d_key));
@@ -557,52 +563,51 @@ void A30_JoystickUpdate(SDL_Joystick *joystick)
             }
         }
     }
-    else if (joystick == (SDL_Joystick *)1) {
-        static int xx = 320 / 2;
-        static int yy = 240 / 2;
+    else if (joystick == (SDL_Joystick *)MYJOY_MODE_MOUSE) {
+        const int XRES = 320;
+        const int YRES = 240;
+        const int INTV = 3;
+        static int xx = XRES / 2;
+        static int yy = YRES / 2;
 
         pre_x = g_lastX;
-        if (pre_x < -50) {
+        if (pre_x < LTH) {
             if (xx > 0) {
-                xx -= 3;
+                xx -= INTV;
             }
         }
-        if (pre_x > 50) {
-            if (xx < 320) {
-                xx += 3;
+        if (pre_x > RTH) {
+            if (xx < XRES) {
+                xx += INTV;
             }
         }
         pre_y = g_lastY;
-        if (pre_y < -50) {
+        if (pre_y < UTH) {
             if (yy > 0) {
-                yy -= 3;
+                yy -= INTV;
             }
         }
-        if (pre_y > 50) {
-            if (yy < 240) {
-                yy += 3;
+        if (pre_y > DTH) {
+            if (yy < YRES) {
+                yy += INTV;
             }
         }
 
-        if (xx || yy) {
+        if (win && (xx || yy)) {
             SDL_SendMouseMotion(win, 0, 0, xx, yy);
-            //printf(PREFIX"%d, %d\n", xx, yy);
         }
     }
     else {
         if (g_lastX != pre_x) {
             pre_x = g_lastX;
             SDL_PrivateJoystickAxis(joystick, 0, pre_x);
-            //printf("X %d\n", pre_x);
         }
 
         if (g_lastY != pre_y) {
             pre_y = g_lastY;
             SDL_PrivateJoystickAxis(joystick, 1, pre_x);
-            //printf("Y %d\n", pre_y);
         }
     }
-    //SDL_PrivateJoystickButton(joystick, 0, s ? SDL_PRESSED : SDL_RELEASED);
 }
 
 static SDL_bool A30_JoystickGetGamepadMapping(int device_index, SDL_GamepadMapping *out)

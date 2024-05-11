@@ -59,6 +59,8 @@
 A30_EventInfo evt = {0};
 extern A30_VideoInfo vid;
 
+int myjoy_mode = MYJOY_MODE_KEYPAD;
+
 static int running = 0;
 static int event_fd = -1;
 static int lower_speed = 0;
@@ -67,7 +69,7 @@ static SDL_Thread *thread = NULL;
 static uint32_t pre_ticks = 0;
 static uint32_t pre_keypad_bitmaps = 0;
 
-const SDL_Scancode code[]={
+const SDL_Scancode code[] = {
     SDLK_UP,            // UP
     SDLK_DOWN,          // DOWN
     SDLK_LEFT,          // LEFT
@@ -202,9 +204,9 @@ int EventUpdate(void *data)
         SDL_SemPost(event_sem);
         usleep(1000000 / 60);
 
-        if (1) {
-            A30_JoystickUpdate(1);
-        }
+#if USE_MYJOY
+        A30_JoystickUpdate((SDL_Joystick *)myjoy_mode);
+#endif
     }
     
     return 0;
