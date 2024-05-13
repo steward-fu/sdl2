@@ -43,7 +43,7 @@ SDL_EGL_SwapWindow_impl(A30)
 SDL_EGL_MakeCurrent_impl(A30)
 #endif
 
-#define EGL_USE_PBUF 1
+#define EGL_USE_PBUF 0
 
 EGLConfig eglConfig = 0;
 EGLDisplay eglDisplay = 0;
@@ -133,7 +133,6 @@ int A30_GLES_SwapWindow(_THIS, SDL_Window *window)
     int h = need_screen_rotation_helper ? REAL_H : LCD_H;
 #endif
 
-    glFinish();
     eglSwapBuffers(eglDisplay, eglSurface);
 
 #if EGL_USE_PBUF
