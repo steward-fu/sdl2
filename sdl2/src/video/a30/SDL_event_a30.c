@@ -47,8 +47,8 @@
 #define X       42
 #define Y       56
 #define L1      15
-#define L2      18
 #define R1      14
+#define L2      18
 #define R2      20
 #define SELECT  97
 #define START   28
@@ -78,13 +78,14 @@ const SDL_Scancode code[] = {
     SDLK_LCTRL,         // B
     SDLK_LSHIFT,        // X
     SDLK_LALT,          // Y
-    SDLK_t,             // L1
-    SDLK_e,             // R1
-    SDLK_TAB,           // L2
-    SDLK_BACKSPACE,     // R2
+    SDLK_TAB,           // L1
+    SDLK_BACKSPACE,     // R1
+    SDLK_e,             // L2
+    SDLK_t,             // R2
     SDLK_RCTRL,         // SELECT
     SDLK_RETURN,        // START
     SDLK_ESCAPE,        // MENU
+    SDLK_POWER,         // POWER
 };
 
 void A30_JoystickUpdate(SDL_Joystick *joystick);
