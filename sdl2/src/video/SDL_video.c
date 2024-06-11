@@ -1616,7 +1616,7 @@ SDL_CreateWindow(const char *title, int x, int y, int w, int h, Uint32 flags)
         flags |= SDL_WINDOW_METAL;
 #endif
     }
-
+    
     if(flags & SDL_WINDOW_OPENGL) {
         if(!_this->GL_CreateContext) {
             SDL_SetError("OpenGL support is either not configured in SDL "

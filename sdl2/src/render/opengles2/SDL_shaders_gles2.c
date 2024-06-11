@@ -30,27 +30,6 @@
 /*************************************************************************************************
  * Vertex/fragment shader source                                                                 *
  *************************************************************************************************/
-static const Uint8 GLES2_Vertex_Default_90D[] = " \
-    uniform mat4 u_projection; \
-    attribute vec2 a_position; \
-    attribute vec4 a_color; \
-    attribute vec2 a_texCoord; \
-    varying vec2 v_texCoord; \
-    varying vec4 v_color; \
-    \
-    void main() \
-    { \
-        const float angle = 90.0 * (3.1415 * 2.0) / 360.0; \
-        mat4 rot = mat4(cos(angle), -sin(angle), 0.0, 0.0, sin(angle), cos(angle), 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0); \
-        mat4 sca = mat4((480.0 / 640.0), 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0); \
-        mat4 tra = mat4(1.0, 0.0, 0.0, -(1.0 - (480.0 / 640.0)), 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0); \
-        v_texCoord = a_texCoord; \
-        gl_Position = u_projection * vec4(a_position, 0.0, 1.0) * rot; \
-        gl_PointSize = 1.0; \
-        v_color = a_color; \
-    } \
-";
-
 static const Uint8 GLES2_Vertex_Default[] = " \
     uniform mat4 u_projection; \
     attribute vec2 a_position; \
@@ -341,23 +320,11 @@ static const Uint8 GLES2_Fragment_TextureExternalOES[] = " \
  * Shader selector                                                                               *
  *************************************************************************************************/
 
-static int used_rotation_helpder = 0;
-extern int need_screen_rotation_helper;
-
-void SDL_RotateGLShaderPosition(int angle)
-{
-    // Rotate the screen to 90d for Miyoo A30 handheld
-    used_rotation_helpder = 0;
-    if ((need_screen_rotation_helper > 0) && (angle == 90)) {
-        used_rotation_helpder = 1;
-    }
-}
-
 const Uint8 *GLES2_GetShader(GLES2_ShaderType type)
 {
     switch(type) {
     case GLES2_SHADER_VERTEX_DEFAULT:
-        return need_screen_rotation_helper ? GLES2_Vertex_Default_90D : GLES2_Vertex_Default;
+        return GLES2_Vertex_Default;
     case GLES2_SHADER_FRAGMENT_SOLID:
         return GLES2_Fragment_Solid;
     case GLES2_SHADER_FRAGMENT_TEXTURE_ABGR:

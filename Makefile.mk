@@ -1,4 +1,4 @@
-SDL2_CFG = --disable-joystick-virtual
+SDL2_CFG+= --disable-joystick-virtual
 SDL2_CFG+= --disable-jack
 SDL2_CFG+= --disable-power
 SDL2_CFG+= --disable-ime

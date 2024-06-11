@@ -27,6 +27,9 @@
 #include "SDL_egl.h"
 
 #include <EGL/egl.h>
+#include <EGL/fbdev_window.h>
+#include <GLES2/gl2.h>
+
 #include <linux/vt.h>
 #include <linux/fb.h>
 #include <sys/types.h>
@@ -35,45 +38,53 @@
 #include <stropts.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <EGL/fbdev_window.h>
 
-#define PREFIX              "[SDL2] "
+#define PREFIX              "[SDL] "
 #define LCD_W               640
-#define LCD_H               640
-#define REAL_W              480
-#define REAL_H              640
-#define GL_SIZE             (640 * 640 * 4)
-#define FB_SIZE             (640 * 480 * 4 * 2)
+#define LCD_H               480
+#define CCU_BASE            0x01c20000
+#define INIT_CPU_CORE       2
+#define INIT_CPU_CLOCK      1500
+#define DEINIT_CPU_CORE     2
+#define DEINIT_CPU_CLOCK    648
 
 #define USE_MYJOY           0
 #define MYJOY_MODE_KEYPAD   0
 #define MYJOY_MODE_MOUSE    1
 
-typedef struct SDL_DisplayData {
-    struct fbdev_window native_display;
-} SDL_DisplayData;
+enum _TEX_TYPE {
+    TEX_SCR = 0,
+    TEX_MAX
+};
 
-typedef struct SDL_WindowData {
-    EGLSurface egl_surface;
-} SDL_WindowData;
+struct _video {
+    SDL_Window *win;
+    EGLConfig eglConfig;
+    EGLDisplay eglDisplay;
+    EGLContext eglContext;
+    EGLSurface eglSurface;
+    GLuint vShader;
+    GLuint fShader;
+    GLuint pObject;
+    GLuint texID[TEX_MAX];
+    GLint posLoc;
+    GLint texLoc;
+    GLint samLoc;
+    GLint alphaLoc;
 
-typedef struct A30_VideoInfo {
-    SDL_Window *window;
-} A30_VideoInfo;
+    int mem_fd;
+    int fb_flip;
+    void *fb_mem[2];
+    uint8_t* ccu_mem;
+    uint8_t* dac_mem;
+    uint32_t *vol_ptr;
+    uint32_t *cpu_ptr;
+};
 
-int A30_VideoInit(_THIS);
-int A30_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode);
-int A30_CreateWindow(_THIS, SDL_Window * window);
-void A30_VideoQuit(_THIS);
-void A30_GetDisplayModes(_THIS, SDL_VideoDisplay * display);
-void A30_SetWindowTitle(_THIS, SDL_Window * window);
-void A30_SetWindowPosition(_THIS, SDL_Window * window);
-void A30_SetWindowSize(_THIS, SDL_Window * window);
-void A30_ShowWindow(_THIS, SDL_Window * window);
-void A30_HideWindow(_THIS, SDL_Window * window);
-void A30_DestroyWindow(_THIS, SDL_Window * window);
-void A30_PumpEvents(_THIS);
-SDL_bool A30_GetWindowWMInfo(_THIS, SDL_Window * window, struct SDL_SysWMinfo *info);
+struct _cpu_clock {
+    int clk;
+    uint32_t reg;
+};
 
 #endif
 

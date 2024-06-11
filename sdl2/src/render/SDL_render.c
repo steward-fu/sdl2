@@ -123,6 +123,9 @@ static const SDL_RenderDriver *render_drivers[] = {
 #if SDL_VIDEO_RENDER_MMIYOO
     &MMIYOO_RenderDriver
 #endif
+#if SDL_VIDEO_RENDER_A30
+    &A30_RenderDriver
+#endif
 };
 #endif /* !SDL_RENDER_DISABLED */
 
@@ -958,7 +961,7 @@ SDL_CreateRenderer(SDL_Window *window, int index, Uint32 flags)
 
     flags|= SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
     if(!window) {
-        SDL_SetError("Invalid window");
+        SDL_SetError("Invalid window (in renderer)");
         goto error;
     }
 

@@ -57,7 +57,7 @@
 #define VOLDOWN 114
 
 A30_EventInfo evt = {0};
-extern A30_VideoInfo vid;
+extern struct _video vid;
 
 int myjoy_mode = MYJOY_MODE_KEYPAD;
 
@@ -280,7 +280,7 @@ void A30_PumpEvents(_THIS)
             uint32_t changed = pre_keypad_bitmaps ^ evt.keypad.bitmaps;
 
             if (changed & (1 << MYKEY_A)) {
-                SDL_SendMouseButton(vid.window, 0, (evt.keypad.bitmaps & (1 << MYKEY_A)) ? SDL_PRESSED : SDL_RELEASED, SDL_BUTTON_LEFT);
+                SDL_SendMouseButton(vid.win, 0, (evt.keypad.bitmaps & (1 << MYKEY_A)) ? SDL_PRESSED : SDL_RELEASED, SDL_BUTTON_LEFT);
             }
 
             for (cc=0; cc<=MYKEY_LAST_BITS; cc++) {
@@ -317,7 +317,7 @@ void A30_PumpEvents(_THIS)
         check_mouse_pos();
 
         if(updated){
-            SDL_SendMouseMotion(vid.window, 0, 0, evt.mouse.x, evt.mouse.y);
+            SDL_SendMouseMotion(vid.win, 0, 0, evt.mouse.x, evt.mouse.y);
         }
         pre_keypad_bitmaps = evt.keypad.bitmaps;
     }

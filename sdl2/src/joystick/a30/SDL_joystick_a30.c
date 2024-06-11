@@ -49,8 +49,6 @@
 #include <sys/stat.h>
 #include <linux/input.h>
 
-#define PREFIX "[SDL2] "
-
 #define SERIAL_GAMEDECK         "/dev/ttyS0"
 #define MIYOO_AXIS_MAX_COUNT    16
 #define MIYOO_PLAYER_MAGIC      0xFF
@@ -87,7 +85,7 @@ static int32_t s_miyoo_axis_last[MIYOO_AXIS_MAX_COUNT] = {0};
 static int running = 0;
 static SDL_Thread *thread = NULL;
 
-extern SDL_Window *win;
+extern struct _video vid;
 
 int uart_open(const char *port)
 {
@@ -593,8 +591,8 @@ void A30_JoystickUpdate(SDL_Joystick *joystick)
             }
         }
 
-        if (win && (xx || yy)) {
-            SDL_SendMouseMotion(win, 0, 0, xx, yy);
+        if (vid.win && (xx || yy)) {
+            SDL_SendMouseMotion(vid.win, 0, 0, xx, yy);
         }
     }
     else {
