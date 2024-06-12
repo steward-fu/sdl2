@@ -54,6 +54,9 @@
 #define MIYOO_PLAYER_MAGIC      0xFF
 #define MIYOO_PLAYER_MAGIC_END  0xFE
 #define MIYOO_PAD_FRAME_LEN     6
+#define MYJOY_MODE_KEYPAD       0
+#define MYJOY_MODE_MOUSE        1
+#define MYJOY_MODE_JOYPAD       2
 
 struct MIYOO_PAD_FRAME {
     uint8_t magic;
@@ -64,30 +67,31 @@ struct MIYOO_PAD_FRAME {
     uint8_t magicEnd;
 };
 
-static int s_fd = -1;
+static int max_x = 200;
+static int zero_x = 135;
+static int min_x = 75;
+
+static int max_y = 200;
+static int zero_y = 135;
+static int min_y = 75;
+
+static int mode = MYJOY_MODE_KEYPAD;
+static int dzone = 65;
+
 static int g_lastX = 0;
 static int g_lastY = 0;
 
-static int MIYOO_ADC_MAX_X  = 200;
-static int MIYOO_ADC_ZERO_X = 137;
-static int MIYOO_ADC_MIN_X  = 76;
-
-static int MIYOO_ADC_MAX_Y  = 200;
-static int MIYOO_ADC_ZERO_Y = 135;
-static int MIYOO_ADC_MIN_Y  = 72;
-
-static int MIYOO_ADC_DEAD_ZONE = 10;
-
+static int s_fd = -1;
 static struct MIYOO_PAD_FRAME s_frame = {0};
 static int32_t s_miyoo_axis[MIYOO_AXIS_MAX_COUNT] = {0};
 static int32_t s_miyoo_axis_last[MIYOO_AXIS_MAX_COUNT] = {0};
 
 static int running = 0;
-static SDL_Thread *thread = NULL;
+static pthread_t thread_id = 0;
 
 extern struct _video vid;
 
-int uart_open(const char *port)
+static int uart_open(const char *port)
 {
     int fd = -1;
 
@@ -239,7 +243,7 @@ static int uart_read(int fd, char *rcv_buf, int data_len)
 
 static int filterDeadzone(int newAxis, int oldAxis)
 {
-    if (abs(newAxis - oldAxis) < MIYOO_ADC_DEAD_ZONE) {
+    if (abs(newAxis - oldAxis) < dzone) {
         return 1;
     }
     return 0;
@@ -281,19 +285,19 @@ static int miyoo_frame_to_axis_x(uint8_t rawX)
 {
     int value = 0;
 
-    if (rawX > MIYOO_ADC_ZERO_X) {
-        value = (rawX - MIYOO_ADC_ZERO_X) * 126 / (MIYOO_ADC_MAX_X - MIYOO_ADC_ZERO_X);
+    if (rawX > zero_x) {
+        value = (rawX - zero_x) * 126 / (max_x - zero_x);
     }
 
-    if (rawX < MIYOO_ADC_ZERO_X) {
-        value = (rawX - MIYOO_ADC_ZERO_X) * 126 / (MIYOO_ADC_ZERO_X - MIYOO_ADC_MIN_X);
+    if (rawX < zero_x) {
+        value = (rawX - zero_x) * 126 / (zero_x - min_x);
     }
 
-    if (value > 0 && value < MIYOO_ADC_DEAD_ZONE) {
+    if (value > 0 && value < dzone) {
         return 0;
     }
 
-    if (value < 0 && value > -(MIYOO_ADC_DEAD_ZONE)) {
+    if (value < 0 && value > -dzone) {
         return 0;
     }
     return value;
@@ -303,19 +307,19 @@ static int miyoo_frame_to_axis_y(uint8_t rawY)
 {
     int value = 0;
 
-    if (rawY > MIYOO_ADC_ZERO_Y) {
-        value = (rawY - MIYOO_ADC_ZERO_Y) * 126 / (MIYOO_ADC_MAX_Y - MIYOO_ADC_ZERO_Y);
+    if (rawY > zero_y) {
+        value = (rawY - zero_y) * 126 / (max_y - zero_y);
     }
 
-    if (rawY < MIYOO_ADC_ZERO_Y) {
-        value = (rawY - MIYOO_ADC_ZERO_Y) * 126 / (MIYOO_ADC_ZERO_Y - MIYOO_ADC_MIN_Y);
+    if (rawY < zero_y) {
+        value = (rawY - zero_y) * 126 / (zero_y - min_y);
     }
 
-    if (value > 0 && value < MIYOO_ADC_DEAD_ZONE) {
+    if (value > 0 && value < dzone) {
         return 0;
     }
 
-    if (value < 0 && value > -(MIYOO_ADC_DEAD_ZONE)) {
+    if (value < 0 && value > -dzone) {
         return 0;
     }
     return value;
@@ -364,7 +368,46 @@ static void miyoo_close_serial_input(void)
 {
 }
 
-int joystick_handler(void *param)
+static int chk_str(const char *src, const char *dst)
+{
+    int len = strlen(dst);
+    return (memcmp(src, dst, len) == 0) ? 1 : 0;
+}
+
+static int miyoo_read_joystick_config(void)
+{
+    FILE *f = NULL;
+    char buf[255] = {0};
+    const char *path = "/config/joypad.config";
+
+    f = fopen(path, "r");
+    if (f) {
+        while (fgets(buf, sizeof(buf), f)) {
+            if (chk_str(buf, "x_min=")) {
+                printf(PREFIX"X_MIN %d\n", atoi(&buf[6]));
+            }
+            else if (chk_str(buf, "x_max=")) {
+                printf(PREFIX"X_MAX %d\n", atoi(&buf[6]));
+            }
+            else if (chk_str(buf, "x_zero=")) {
+                printf(PREFIX"X_ZERO %d\n", atoi(&buf[7]));
+            }
+            else if (chk_str(buf, "y_min=")) {
+                printf(PREFIX"Y_MIN %d\n", atoi(&buf[6]));
+            }
+            else if (chk_str(buf, "y_max=")) {
+                printf(PREFIX"Y_MAX %d\n", atoi(&buf[6]));
+            }
+            else if (chk_str(buf, "y_zero=")) {
+                printf(PREFIX"Y_ZERO %d\n", atoi(&buf[7]));
+            }
+        }
+        fclose(f);
+    }
+    return 0;
+}
+
+void* joystick_handler(void *param)
 {
     int len = 0;
     char rcv_buf[255] = {0};
@@ -375,9 +418,9 @@ int joystick_handler(void *param)
             rcv_buf[len] = '\0';
             parser_miyoo_input(rcv_buf, len);
         }
-        usleep(10);
+        usleep(10000);
     }
-    return 0;
+    return NULL;
 }
 
 int A30_JoystickInit(void)
@@ -385,11 +428,10 @@ int A30_JoystickInit(void)
     printf(PREFIX"%s\n", __func__);
 
     running = 1;
+    miyoo_read_joystick_config();
     miyoo_init_serial_input();
-    if((thread = SDL_CreateThreadInternal(joystick_handler, "a30_joystick_thread", 4096, NULL)) == NULL) {
-        printf(PREFIX"Failed to create joystick thread");
-    }
-    return 0;
+    pthread_create(&thread_id, NULL, joystick_handler, NULL);
+    return 1;
 }
 
 void A30_JoystickQuit(void)
@@ -398,7 +440,7 @@ void A30_JoystickQuit(void)
 
     running = 0;
     miyoo_close_serial_input();
-    SDL_WaitThread(thread, NULL);
+    pthread_join(thread_id, NULL);
     uart_close(s_fd);
     s_fd = -1;
 }
@@ -498,16 +540,16 @@ void A30_JoystickUpdate(SDL_Joystick *joystick)
     static int pre_x = -1;
     static int pre_y = -1;
 
-    if (joystick == (SDL_Joystick *)MYJOY_MODE_KEYPAD) {
+    if (mode == MYJOY_MODE_KEYPAD) {
         static int pre_up = 0;
         static int pre_down = 0;
         static int pre_left = 0;
         static int pre_right = 0;
 
-        uint32_t u_key = SDLK_0;
-        uint32_t d_key = SDLK_1;
-        uint32_t l_key = SDLK_2;
-        uint32_t r_key = SDLK_3;
+        uint32_t u_key = SDLK_UP;
+        uint32_t d_key = SDLK_DOWN;
+        uint32_t l_key = SDLK_LEFT;
+        uint32_t r_key = SDLK_RIGHT;
 
         if (g_lastX != pre_x) {
             pre_x = g_lastX;
@@ -561,7 +603,7 @@ void A30_JoystickUpdate(SDL_Joystick *joystick)
             }
         }
     }
-    else if (joystick == (SDL_Joystick *)MYJOY_MODE_MOUSE) {
+    else if (mode == MYJOY_MODE_MOUSE) {
         const int XRES = 320;
         const int YRES = 240;
         const int INTV = 3;

@@ -59,8 +59,6 @@
 A30_EventInfo evt = {0};
 extern struct _video vid;
 
-int myjoy_mode = MYJOY_MODE_KEYPAD;
-
 static int running = 0;
 static int event_fd = -1;
 static int lower_speed = 0;
@@ -201,13 +199,12 @@ int EventUpdate(void *data)
                     pre_ticks = clock();
                 }
             }
+#if USE_MYJOY
+            A30_JoystickUpdate(NULL);
+#endif
         }
         SDL_SemPost(event_sem);
         usleep(1000000 / 60);
-
-#if USE_MYJOY
-        A30_JoystickUpdate((SDL_Joystick *)myjoy_mode);
-#endif
     }
     
     return 0;

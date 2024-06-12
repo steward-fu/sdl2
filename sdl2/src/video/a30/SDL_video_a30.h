@@ -48,7 +48,7 @@
 #define DEINIT_CPU_CORE     2
 #define DEINIT_CPU_CLOCK    648
 
-#define USE_MYJOY           0
+#define USE_MYJOY           1
 #define MYJOY_MODE_KEYPAD   0
 #define MYJOY_MODE_MOUSE    1
 
