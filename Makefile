@@ -1,5 +1,6 @@
 SDL2_CFG+= --disable-oss
 SDL2_CFG+= --disable-alsa
+SDL2_CFG+= --disable-video-opengl
 SDL2_CFG+= --disable-video-opengles
 SDL2_CFG+= --disable-video-opengles2
 

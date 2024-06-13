@@ -254,6 +254,8 @@ int My_QueueCopy(SDL_Texture *texture, const void *pixels, const SDL_Rect *srcre
         draw_pen(pixels, src.w, pitch);
     }
 
+    dst.w = 640;
+    dst.h = 480;
     GFX_Copy(pixels, src, dst, pitch, 0, E_MI_GFX_ROTATE_180);
     return 0;
 }
