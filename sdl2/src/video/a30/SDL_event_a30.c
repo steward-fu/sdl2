@@ -72,17 +72,17 @@ const SDL_Scancode code[] = {
     SDLK_DOWN,          // DOWN
     SDLK_LEFT,          // LEFT
     SDLK_RIGHT,         // RIGHT
-    SDLK_SPACE,         // A
-    SDLK_LCTRL,         // B
+    SDLK_LCTRL,         // A
+    SDLK_LALT,          // B
     SDLK_LSHIFT,        // X
-    SDLK_LALT,          // Y
+    SDLK_SPACE,         // Y
     SDLK_TAB,           // L1
     SDLK_BACKSPACE,     // R1
-    SDLK_e,             // L2
-    SDLK_t,             // R2
-    SDLK_RCTRL,         // SELECT
+    SDLK_PAGEDOWN,      // L2
+    SDLK_PAGEUP,        // R2
+    SDLK_ESCAPE,        // SELECT
     SDLK_RETURN,        // START
-    SDLK_ESCAPE,        // MENU
+    SDLK_HOME,          // MENU
     SDLK_POWER,         // POWER
 };
 
