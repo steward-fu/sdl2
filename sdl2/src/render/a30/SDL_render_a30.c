@@ -114,6 +114,18 @@ static int A30_LockTexture(SDL_Renderer *renderer, SDL_Texture *texture, const S
 
 static int A30_UpdateTexture(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_Rect *rect, const void *pixels, int pitch)
 {
+    int x = 0;
+    int y = 0;
+    int w = rect->w;
+    int h = rect->h;
+    float w0 = (float)LCD_W / w;
+    float h0 = (float)LCD_H / h;
+
+    w = (float)w * ((w0 > h0) ? h0 : w0);
+    h = (float)h * ((w0 > h0) ? h0 : w0);
+    x = (LCD_W - w) / 2;
+    y = (LCD_H - h) / 2;
+
     glBindTexture(GL_TEXTURE_2D, vid.texID[TEX_SCR]);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -124,6 +136,20 @@ static int A30_UpdateTexture(SDL_Renderer *renderer, SDL_Texture *texture, const
     }
     else {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, rect->w, rect->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    }
+
+    if (vid.scale) {
+        vVertices[0] = ((((float)x) / LCD_W) - 0.5) * 2.0;
+        vVertices[1] = ((((float)y) / LCD_H) - 0.5) * -2.0;
+
+        vVertices[5] = vVertices[0];
+        vVertices[6] = ((((float)(y + h)) / LCD_H) - 0.5) * -2.0;
+
+        vVertices[10] = ((((float)(x + w)) / LCD_W) - 0.5) * 2.0;
+        vVertices[11] = vVertices[6];
+
+        vVertices[15] = vVertices[10];
+        vVertices[16] = vVertices[1];
     }
 
     glActiveTexture(GL_TEXTURE0);

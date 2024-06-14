@@ -387,6 +387,7 @@ int A30_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode)
 
 int A30_CreateWindow(_THIS, SDL_Window *window)
 {
+    vid.win = window;
     SDL_SetMouseFocus(window);
     printf(PREFIX"Window %p (width:%d, height:%d)\n", window, window->w, window->h);
     return 0;

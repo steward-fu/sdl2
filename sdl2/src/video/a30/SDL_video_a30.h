@@ -72,6 +72,7 @@ struct _video {
     GLint samLoc;
     GLint alphaLoc;
 
+    int scale;
     int mem_fd;
     int fb_flip;
     void *fb_mem[2];
