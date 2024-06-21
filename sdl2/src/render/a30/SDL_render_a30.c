@@ -114,8 +114,8 @@ static int A30_LockTexture(SDL_Renderer *renderer, SDL_Texture *texture, const S
 
 static int A30_UpdateTexture(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_Rect *rect, const void *pixels, int pitch)
 {
-    int x = 0;
-    int y = 0;
+    int x = rect->x;
+    int y = rect->y;
     int w = rect->w;
     int h = rect->h;
     float w0 = (float)LCD_W / w;
@@ -123,8 +123,6 @@ static int A30_UpdateTexture(SDL_Renderer *renderer, SDL_Texture *texture, const
 
     w = (float)w * ((w0 > h0) ? h0 : w0);
     h = (float)h * ((w0 > h0) ? h0 : w0);
-    x = (LCD_W - w) / 2;
-    y = (LCD_H - h) / 2;
 
     glBindTexture(GL_TEXTURE_2D, vid.texID[TEX_SCR]);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -355,8 +353,8 @@ SDL_RenderDriver A30_RenderDriver = {
         .texture_formats = {
             [0] = SDL_PIXELFORMAT_RGB565, [2] = SDL_PIXELFORMAT_ARGB8888,
         },
-        .max_texture_width = 800,
-        .max_texture_height = 600,
+        .max_texture_width = 640,
+        .max_texture_height = 480,
     }
 };
 

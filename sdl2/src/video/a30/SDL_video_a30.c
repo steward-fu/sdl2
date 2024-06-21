@@ -389,7 +389,7 @@ int A30_CreateWindow(_THIS, SDL_Window *window)
 {
     vid.win = window;
     SDL_SetMouseFocus(window);
-    printf(PREFIX"Window %p (width:%d, height:%d)\n", window, window->w, window->h);
+    printf(PREFIX"Window %p (%d,%d,%d,%d, opengl:%d)\n", window, window->x, window->y, window->w, window->h, window->flags & SDL_WINDOW_OPENGL);
     return 0;
 }
 
@@ -405,22 +405,22 @@ void A30_SetWindowTitle(_THIS, SDL_Window *window)
 
 void A30_SetWindowPosition(_THIS, SDL_Window *window)
 {
-    printf(PREFIX"%s\n", __func__);
+    printf(PREFIX"%s, %d, %d, %d, %d\n", __func__, window->x, window->y, window->w, window->h);
 }
 
 void A30_SetWindowSize(_THIS, SDL_Window *window)
 {
-    printf(PREFIX"%s\n", __func__);
+    printf(PREFIX"%s, %d, %d, %d, %d\n", __func__, window->x, window->y, window->w, window->h);
 }
 
 void A30_ShowWindow(_THIS, SDL_Window *window)
 {
-    printf(PREFIX"%s\n", __func__);
+    printf(PREFIX"%s, %d, %d, %d, %d\n", __func__, window->x, window->y, window->w, window->h);
 }
 
 void A30_HideWindow(_THIS, SDL_Window *window)
 {
-    printf(PREFIX"%s\n", __func__);
+    printf(PREFIX"%s, %d, %d, %d, %d\n", __func__, window->x, window->y, window->w, window->h);
 }
 
 SDL_bool A30_GetWindowWMInfo(_THIS, SDL_Window *window, struct SDL_SysWMinfo *info)
