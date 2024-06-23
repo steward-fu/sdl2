@@ -44,7 +44,7 @@
 #define LCD_H               480
 #define CCU_BASE            0x01c20000
 #define INIT_CPU_CORE       2
-#define INIT_CPU_CLOCK      1500
+#define INIT_CPU_CLOCK      1200
 #define DEINIT_CPU_CORE     2
 #define DEINIT_CPU_CLOCK    648
 
