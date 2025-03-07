@@ -1,0 +1,8 @@
+Porting libSDL-2.0 to Motorola XT894 smartphone.
+
+Here is the configuration:
+$ ./configure --enable-video-xt894 --disable-video-x11 --disable-video-opengl --disable-video-opengles --disable-video-opengles2 --disable-video-vulkan --build=arm-linux
+
+
+03/07/2025
+Steward Fu

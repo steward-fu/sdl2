@@ -2424,68 +2424,16 @@ CheckMMiyooVideo()
     fi
 }
 
-CheckTrimuiVideo()
+CheckXT894Video()
 {
     if test x$enable_video = xyes; then
-        AC_DEFINE(SDL_VIDEO_DRIVER_MMIYOO, 1, [ ])
-        AC_DEFINE(SDL_VIDEO_RENDER_MMIYOO, 1, [ ])
-        SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
+        AC_DEFINE(SDL_VIDEO_DRIVER_XT894, 1, [ ])
+        AC_DEFINE(SDL_VIDEO_RENDER_XT894, 1, [ ])
+        SOURCES="$SOURCES $srcdir/src/video/xt894/*.c"
         have_video=yes
-        EXTRA_CFLAGS="$EXTRA_CFLAGS -DTRIMUI -fPIC -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3 -I../trimui/inc -I/opt/mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2"
-        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljson-c -L. -lEGL -lGLESv2"
-        SUMMARY_video="${SUMMARY_video} mmiyoo"
-    fi
-}
-
-CheckFunkeysVideo()
-{
-    if test x$enable_video = xyes; then
-        AC_DEFINE(SDL_VIDEO_DRIVER_MMIYOO, 1, [ ])
-        AC_DEFINE(SDL_VIDEO_RENDER_MMIYOO, 1, [ ])
-        SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
-        have_video=yes
-        EXTRA_CFLAGS="$EXTRA_CFLAGS -DFUNKEYS -fPIC -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3 -I../funkeys/inc -I/opt/mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2"
-        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljson-c -L. -lEGL -lGLESv2"
-        SUMMARY_video="${SUMMARY_video} mmiyoo"
-    fi
-}
-
-CheckPandoraVideo()
-{
-    if test x$enable_video = xyes; then
-        AC_DEFINE(SDL_VIDEO_DRIVER_MMIYOO, 1, [ ])
-        AC_DEFINE(SDL_VIDEO_RENDER_MMIYOO, 1, [ ])
-        SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
-        have_video=yes
-        EXTRA_CFLAGS="$EXTRA_CFLAGS -DPANDORA -fPIC -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon -ffast-math -O3 -I/usr/local/include/SDL2"
-        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljson-c -L. -lEGL -lGLESv2"
-        SUMMARY_video="${SUMMARY_video} mmiyoo"
-    fi
-}
-
-CheckQX1000Video()
-{
-    if test x$enable_video = xyes; then
-        AC_DEFINE(SDL_VIDEO_DRIVER_MMIYOO, 1, [ ])
-        AC_DEFINE(SDL_VIDEO_RENDER_MMIYOO, 1, [ ])
-        SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
-        have_video=yes
-        EXTRA_CFLAGS="$EXTRA_CFLAGS -DQX1000 -fPIC -mcpu=cortex-a53 -mtune=cortex-a53 -mfpu=neon -O3 -I/usr/local/include/SDL2"
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DXT894 -fPIC -mcpu=cortex-a7 -mtune=cortex-a7 -mfpu=neon -O3 -I/usr/local/include/SDL2"
         EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljson-c -lwayland-client -lwayland-egl -L. -lEGL -lGLESv2"
-        SUMMARY_video="${SUMMARY_video} mmiyoo"
-    fi
-}
-
-CheckUnittestVideo()
-{
-    if test x$enable_video = xyes; then
-        AC_DEFINE(SDL_VIDEO_DRIVER_MMIYOO, 1, [ ])
-        AC_DEFINE(SDL_VIDEO_RENDER_MMIYOO, 1, [ ])
-        SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
-        have_video=yes
-        EXTRA_CFLAGS="$EXTRA_CFLAGS -DUNITTEST -DMMIYOO -fPIC -I../mmiyoo/inc -I/opt/mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2 -I../unittest/extras/fixture/src -I../unittest/src -I../unittest/extras/memory/src"
-        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljson-c -L. -lEGL -lGLESv2"
-        SUMMARY_video="${SUMMARY_video} mmiyoo"
+        SUMMARY_video="${SUMMARY_video} xt897"
     fi
 }
 
@@ -2499,73 +2447,6 @@ CheckMMiyooAudio()
             EXTRA_CFLAGS="$EXTRA_CFLAGS -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3"
             EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L../mmiyoo/lib -lmi_ao -lshmvar -lmi_common -lmi_sys -lmi_gfx"
         fi
-        SUMMARY_audio="${SUMMARY_audio} mmiyoo"
-    fi
-}
-
-CheckTrimuiAudio()
-{
-    if test x$enable_audio = xyes; then
-        AC_DEFINE(SDL_AUDIO_DRIVER_MMIYOO, 1, [ ])
-        SOURCES="$SOURCES $srcdir/src/audio/mmiyoo/*.c"
-        have_audio=yes
-        if test x$HOST = xarm-linux; then
-            EXTRA_CFLAGS="$EXTRA_CFLAGS -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
-        fi
-        SUMMARY_audio="${SUMMARY_audio} mmiyoo"
-    fi
-}
-
-CheckFunkeysAudio()
-{
-    if test x$enable_audio = xyes; then
-        AC_DEFINE(SDL_AUDIO_DRIVER_MMIYOO, 1, [ ])
-        SOURCES="$SOURCES $srcdir/src/audio/mmiyoo/*.c"
-        have_audio=yes
-        if test x$HOST = xarm-linux; then
-            EXTRA_CFLAGS="$EXTRA_CFLAGS -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
-        fi
-        SUMMARY_audio="${SUMMARY_audio} mmiyoo"
-    fi
-}
-
-CheckPandoraAudio()
-{
-    if test x$enable_audio = xyes; then
-        AC_DEFINE(SDL_AUDIO_DRIVER_MMIYOO, 1, [ ])
-        SOURCES="$SOURCES $srcdir/src/audio/mmiyoo/*.c"
-        have_audio=yes
-        if test x$HOST = xarm-linux; then
-            EXTRA_CFLAGS="$EXTRA_CFLAGS -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon -O3"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
-        fi
-        SUMMARY_audio="${SUMMARY_audio} mmiyoo"
-    fi
-}
-
-CheckQX1000Audio()
-{
-    if test x$enable_audio = xyes; then
-        AC_DEFINE(SDL_AUDIO_DRIVER_MMIYOO, 1, [ ])
-        SOURCES="$SOURCES $srcdir/src/audio/mmiyoo/*.c"
-        have_audio=yes
-        if test x$HOST = xarm-linux; then
-            EXTRA_CFLAGS="$EXTRA_CFLAGS -mcpu=cortex-a53 -mtune=cortex-a53 -mfpu=neon -O3"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
-        fi
-        SUMMARY_audio="${SUMMARY_audio} mmiyoo"
-    fi
-}
-
-CheckUnittestAudio()
-{
-    if test x$enable_audio = xyes; then
-        AC_DEFINE(SDL_AUDIO_DRIVER_MMIYOO, 1, [ ])
-        SOURCES="$SOURCES $srcdir/src/audio/mmiyoo/*.c"
-        have_audio=yes
-        EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
         SUMMARY_audio="${SUMMARY_audio} mmiyoo"
     fi
 }
@@ -2676,6 +2557,19 @@ CheckOpenGLES()
                 SUMMARY_video="${SUMMARY_video} opengl_es2"
             fi
         fi
+    fi
+}
+
+AC_ARG_ENABLE(video-xt894,
+[AS_HELP_STRING([--enable-video-xt894], [include Motorola Droid 4 (XT894) support [default=no]])],
+              , enable_video_xt894=no)
+
+dnl Check for Motorola Droid 4 (XT894)
+CheckXT894()
+{
+    if test x$enable_video = xyes -a x$enable_video_xt894 = xyes; then
+        AC_DEFINE(SDL_VIDEO_XT894, 1, [ ])
+        SUMMARY_video="${SUMMARY_video} xt894"
     fi
 }
 
@@ -3860,26 +3754,9 @@ case "$host" in
             *mmiyoo*)           ARCH=mmiyoo
                 CheckMMiyooVideo
                 ;;
-            *trimui*)           ARCH=trimui
-                CheckTrimuiVideo
-                ;;
-            *funkeys*)          ARCH=funkeys
-                CheckFunkeysVideo
-                ;;
-            *pandora*)          ARCH=pandora
-                CheckPandoraVideo
-                ;;
-            *qx1000*)           ARCH=qx1000
-                CheckQX1000Video
-                ;;
-            *unittest*)         ARCH=unittest
-                CheckUnittestVideo
-                ;;
         esac
 
         case "$MOD" in
-            *unittest*)
-                ;;
             *)
                 CheckVisibilityHidden
                 ;;
@@ -3915,6 +3792,7 @@ case "$host" in
         CheckGLX
         CheckOpenGL
         CheckOpenGLES
+        CheckXT894
         CheckVulkan
         CheckWayland
         CheckInputEvents
@@ -3991,20 +3869,8 @@ case "$host" in
             mmiyoo)
                 CheckMMiyooAudio
             ;;
-            trimui)
-                CheckTrimuiAudio
-            ;;
-            funkeys)
-                CheckFunkeysAudio
-            ;;
-            pandora)
-                CheckPandoraAudio
-            ;;
-            qx1000)
-                CheckQX1000Audio
-            ;;
-            unittest)
-                CheckUnittestAudio
+            xt894)
+                CheckXT894Audio
             ;;
           esac
         fi
@@ -4031,12 +3897,12 @@ case "$host" in
                 SOURCES="$SOURCES $srcdir/src/joystick/steam/*.c"
                 have_joystick=yes
             ;;
-            mmiyoo|trimui|funkeys|pandora|unittest)
+            mmiyoo)
                 AC_DEFINE(SDL_JOYSTICK_MMIYOO, 1, [ ])
                 SOURCES="$SOURCES $srcdir/src/joystick/mmiyoo/*.c"
                 have_joystick=yes
             ;;
-            a30|unittest)
+            a30)
                 AC_DEFINE(SDL_JOYSTICK_A30, 1, [ ])
                 SOURCES="$SOURCES $srcdir/src/joystick/a30/*.c"
                 have_joystick=yes

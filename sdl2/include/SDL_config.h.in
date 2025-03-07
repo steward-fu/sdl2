@@ -485,5 +485,6 @@
 #undef SDL_AUDIO_DRIVER_MMIYOO
 #undef SDL_JOYSTICK_A30
 #undef SDL_JOYSTICK_MMIYOO
+#undef SDL_VIDEO_DRIVER_XT894
 
 #endif /* SDL_config_h_ */
