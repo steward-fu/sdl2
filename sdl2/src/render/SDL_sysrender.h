@@ -271,6 +271,7 @@ extern SDL_RenderDriver METAL_RenderDriver;
 extern SDL_RenderDriver PSP_RenderDriver;
 extern SDL_RenderDriver A30_RenderDriver;
 extern SDL_RenderDriver MMIYOO_RenderDriver;
+extern SDL_RenderDriver XT894_RenderDriver;
 extern SDL_RenderDriver SW_RenderDriver;
 extern SDL_RenderDriver VITA_GXM_RenderDriver;
 

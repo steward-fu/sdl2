@@ -439,6 +439,7 @@ extern VideoBootStrap KMSDRM_LEGACY_bootstrap;
 extern VideoBootStrap DUMMY_bootstrap;
 extern VideoBootStrap A30_bootstrap;
 extern VideoBootStrap MMIYOO_bootstrap;
+extern VideoBootStrap XT894_bootstrap;
 extern VideoBootStrap Wayland_bootstrap;
 extern VideoBootStrap NACL_bootstrap;
 extern VideoBootStrap VIVANTE_bootstrap;

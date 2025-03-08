@@ -153,6 +153,26 @@ SDL_InitSubSystem(Uint32 flags)
 {
     Uint32 flags_initialized = 0;
 
+#if SDL_VIDEO_DRIVER_A30
+	SDL_setenv("SDL_VIDEODRIVER", "a30", 1);
+#endif
+
+#if SDL_VIDEO_DRIVER_QX1000
+	SDL_setenv("SDL_VIDEODRIVER", "qx1000", 1);
+#endif
+
+#if SDL_VIDEO_DRIVER_XT894
+	SDL_setenv("SDL_VIDEODRIVER", "xt894", 1);
+#endif
+
+#if SDL_VIDEO_DRIVER_XT897
+	SDL_setenv("SDL_VIDEODRIVER", "xt897", 1);
+#endif
+
+#if SDL_VIDEO_DRIVER_PINEPHONE
+	SDL_setenv("SDL_VIDEODRIVER", "pinephone", 1);
+#endif
+
     if(!SDL_MainIsReady) {
         SDL_SetError("Application didn't initialize properly, did you include SDL_main.h in the file containing your main() function?");
         return -1;

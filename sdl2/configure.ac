@@ -2424,6 +2424,10 @@ CheckMMiyooVideo()
     fi
 }
 
+AC_ARG_ENABLE(video-xt894,
+[AS_HELP_STRING([--enable-video-xt894], [include Motorola Droid 4 (XT894) support [default=no]])],
+              , enable_video_xt894=no)
+
 CheckXT894Video()
 {
     if test x$enable_video = xyes; then
@@ -2431,8 +2435,8 @@ CheckXT894Video()
         AC_DEFINE(SDL_VIDEO_RENDER_XT894, 1, [ ])
         SOURCES="$SOURCES $srcdir/src/video/xt894/*.c"
         have_video=yes
-        EXTRA_CFLAGS="$EXTRA_CFLAGS -DXT894 -fPIC -mcpu=cortex-a7 -mtune=cortex-a7 -mfpu=neon -O3 -I/usr/local/include/SDL2"
-        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljson-c -lwayland-client -lwayland-egl -L. -lEGL -lGLESv2"
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DXT894 -I/usr/local/include/SDL2"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -L. -lEGL -lGLESv2"
         SUMMARY_video="${SUMMARY_video} xt897"
     fi
 }
@@ -2557,19 +2561,6 @@ CheckOpenGLES()
                 SUMMARY_video="${SUMMARY_video} opengl_es2"
             fi
         fi
-    fi
-}
-
-AC_ARG_ENABLE(video-xt894,
-[AS_HELP_STRING([--enable-video-xt894], [include Motorola Droid 4 (XT894) support [default=no]])],
-              , enable_video_xt894=no)
-
-dnl Check for Motorola Droid 4 (XT894)
-CheckXT894()
-{
-    if test x$enable_video = xyes -a x$enable_video_xt894 = xyes; then
-        AC_DEFINE(SDL_VIDEO_XT894, 1, [ ])
-        SUMMARY_video="${SUMMARY_video} xt894"
     fi
 }
 
@@ -3792,7 +3783,7 @@ case "$host" in
         CheckGLX
         CheckOpenGL
         CheckOpenGLES
-        CheckXT894
+        CheckXT894Video
         CheckVulkan
         CheckWayland
         CheckInputEvents
@@ -3868,9 +3859,6 @@ case "$host" in
             ;;
             mmiyoo)
                 CheckMMiyooAudio
-            ;;
-            xt894)
-                CheckXT894Audio
             ;;
           esac
         fi

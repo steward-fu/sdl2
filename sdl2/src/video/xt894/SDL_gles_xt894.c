@@ -1,53 +1,33 @@
-/*
-  Customized version for Miyoo-Mini handheld.
-  Only tested under Miyoo-Mini stock OS (original firmware) with Parasyte compatible layer.
+// LGPL-2.1 License
+// (C) 2025 Steward Fu <steward.fu@gmail.com>
 
-  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
-  Copyright (C) 2022-2022 Steward Fu <steward.fu@gmail.com>
-
-  This software is provided 'as-is', without any express or implied
-  warranty.  In no event will the authors be held liable for any damages
-  arising from the use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-  including commercial applications, and to alter it and redistribute it
-  freely, subject to the following restrictions:
-
-  1. The origin of this software must not be misrepresented; you must not
-     claim that you wrote the original software. If you use this software
-     in a product, an acknowledgment in the product documentation would be
-     appreciated but is not required.
-  2. Altered source versions must be plainly marked as such, and must not be
-     misrepresented as being the original software.
-  3. This notice may not be removed or altered from any source distribution.
-*/
 #include "../../SDL_internal.h"
 
-#if SDL_VIDEO_DRIVER_MMIYOO
+#if SDL_VIDEO_DRIVER_XT894
 
-#include "SDL_video_mmiyoo.h"
-#include "SDL_opengles_mmiyoo.h"
+#include "SDL_video_xt894.h"
+#include "SDL_gles_xt894.h"
 
+static EGLConfig config = 0;
 static EGLDisplay display = 0;
 static EGLContext context = 0;
 static EGLSurface surface = 0;
-static EGLConfig config = 0;
-static void *fb_cb = NULL;
-
-EGLBoolean eglUpdateBufferSettings(EGLDisplay display, EGLSurface surface, void *cb, void *p0, void *p1);
 
 int glLoadLibrary(_THIS, const char *name)
 {
+    debug("%s\n", __func__);
     return 0;
 }
 
 void *glGetProcAddress(_THIS, const char *proc)
 {
+    debug("%s\n", __func__);
     return eglGetProcAddress(proc);
 }
 
 void glUnloadLibrary(_THIS)
 {
+    debug("%s\n", __func__);
     eglTerminate(_this->gl_data->display);
 }
 
@@ -64,7 +44,10 @@ SDL_GLContext glCreateContext(_THIS, SDL_Window *window)
         EGLint client_version[2];
         EGLint none;
     } egl_ctx_attr = {
-        .client_version = { EGL_CONTEXT_CLIENT_VERSION, 2 },
+        .client_version = {
+            EGL_CONTEXT_CLIENT_VERSION,
+            2
+        },
         .none = EGL_NONE
     };
 
@@ -72,24 +55,27 @@ SDL_GLContext glCreateContext(_THIS, SDL_Window *window)
         EGLint render_buffer[2];
         EGLint none;
     } egl_surf_attr = {
-        .render_buffer = { EGL_RENDER_BUFFER, EGL_BACK_BUFFER },
+        .render_buffer = {
+            EGL_RENDER_BUFFER,
+            EGL_BACK_BUFFER
+        },
         .none = EGL_NONE
     };
 
+    debug("%s, display=%p\n", __func__, display);
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    printf(PREFIX"EGL Display %p\n", display);
     eglInitialize(display, &majorVersion, &minorVersion);
     eglGetConfigs(display, NULL, 0, &numConfigs);
     cfgs = SDL_malloc(numConfigs * sizeof(EGLConfig));
     if (cfgs == NULL) {
-        printf(PREFIX"Failed to allocate memory for EGL config\n");
+        debug("%s, failed to allocate memory for EGL config\n", __func__);
         return NULL;
     }
 
     rc = eglGetConfigs(display, cfgs, numConfigs, &numConfigs);
     if (rc != EGL_TRUE) {
         SDL_free(cfgs);
-        printf(PREFIX"Failed to get EGL config\n");
+        debug("%s, failed to get EGL config\n", __func__);
         return NULL;
     }
 
@@ -113,52 +99,48 @@ SDL_GLContext glCreateContext(_THIS, SDL_Window *window)
         break;
     }
     SDL_free(cfgs);
-    printf(PREFIX"EGL Config %p\n", config);
+    debug("%s, config=%p\n", __func__, config);
 
     context = eglCreateContext(display, config, EGL_NO_CONTEXT, (EGLint *)&egl_ctx_attr);
     if (context == EGL_NO_CONTEXT) {
-        printf(PREFIX"Failed to create EGL context\n");
+        debug("%s, failed to create EGL context\n", __func__);
         return NULL;
     }
 
     surface = eglCreateWindowSurface(display, config, 0, (EGLint*)&egl_surf_attr);
-    printf(PREFIX"EGL Surface %p\n", surface);
+    debug("%s, surface=%p\n", __func__, surface);
     if (surface == EGL_NO_SURFACE) {
-        printf(PREFIX"Failed to create EGL surface\n");
+        debug("%s, failed to create EGL surface\n", __func__);
         return NULL;
     }
 
-    printf(PREFIX"Passing Buffer Settings (cb %p)\n", fb_cb);
     eglMakeCurrent(display, surface, surface, context);
-    eglUpdateBufferSettings(display, surface, fb_cb, NULL, NULL);
-    printf(PREFIX"Prepared EGL successfully\n");
+    debug("%s, EGL is ready\n", __func__);
     return context;
 }
 
 int glSetSwapInterval(_THIS, int interval)
 {
-    return 0;
-}
-
-int glUpdateBufferSettings(void *cb)
-{
-    fb_cb = cb;
-    printf(PREFIX"Updated Buffer Settings (cb %p)\n", cb);
+    debug("%s\n", __func__);
     return 0;
 }
 
 int glSwapWindow(_THIS, SDL_Window *window)
 {
-    return eglSwapBuffers(display, surface) == EGL_TRUE ? 0 : -1;
+    debug("%s\n", __func__);
+    return eglSwapBuffers(display, surface) == (EGL_TRUE ? 0 : -1);
 }
 
 int glMakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
 {
+    debug("%s\n", __func__);
     return 0;
 }
 
 void glDeleteContext(_THIS, SDL_GLContext context)
 {
+    debug("%s\n", __func__);
 }
 
 #endif
+
