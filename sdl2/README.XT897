@@ -1,0 +1,8 @@
+SDL v2.0 for Motorola Photon Q (XT897) smartphone.
+
+How to build the source code:
+$ ./autogen.sh
+$ ./configure --enable-video-xt897 --disable-video-opengl --disable-video-opengles --disable-video-opengles2 --build=arm-linux
+
+03/08/2025
+Steward Fu

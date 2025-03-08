@@ -2424,18 +2424,35 @@ CheckMMiyooVideo()
     fi
 }
 
-AC_ARG_ENABLE(video-xt894,
-[AS_HELP_STRING([--enable-video-xt894], [include Motorola Droid 4 (XT894) support [default=no]])],
-              , enable_video_xt894=no)
-
 CheckXT894Video()
 {
-    if test x$enable_video = xyes; then
+    AC_ARG_ENABLE(video-xt894,
+[AS_HELP_STRING([--enable-video-xt894], [use Motorola Droid 4 (XT894) driver [default=no]])],
+                  , enable_video_xt894=no)
+
+    if test x$enable_video_xt894 = xyes; then
         AC_DEFINE(SDL_VIDEO_DRIVER_XT894, 1, [ ])
         AC_DEFINE(SDL_VIDEO_RENDER_XT894, 1, [ ])
         SOURCES="$SOURCES $srcdir/src/video/xt894/*.c"
         have_video=yes
         EXTRA_CFLAGS="$EXTRA_CFLAGS -DXT894 -I/usr/local/include/SDL2"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -L. -lEGL -lGLESv2"
+        SUMMARY_video="${SUMMARY_video} xt894"
+    fi
+}
+
+CheckXT897Video()
+{
+    AC_ARG_ENABLE(video-xt897,
+[AS_HELP_STRING([--enable-video-xt897], [use Motorola Photon Q (XT897) driver [default=no]])],
+                  , enable_video_xt897=no)
+
+    if test x$enable_video_xt897 = xyes; then
+        AC_DEFINE(SDL_VIDEO_DRIVER_XT897, 1, [ ])
+        AC_DEFINE(SDL_VIDEO_RENDER_XT897, 1, [ ])
+        SOURCES="$SOURCES $srcdir/src/video/xt897/*.c"
+        have_video=yes
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DXT897 -I/usr/local/include/SDL2"
         EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -L. -lEGL -lGLESv2"
         SUMMARY_video="${SUMMARY_video} xt897"
     fi
@@ -3784,6 +3801,7 @@ case "$host" in
         CheckOpenGL
         CheckOpenGLES
         CheckXT894Video
+        CheckXT897Video
         CheckVulkan
         CheckWayland
         CheckInputEvents

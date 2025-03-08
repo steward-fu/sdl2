@@ -129,6 +129,9 @@ static const SDL_RenderDriver *render_drivers[] = {
 #if SDL_VIDEO_RENDER_XT894
     &XT894_RenderDriver
 #endif
+#if SDL_VIDEO_RENDER_XT897
+    &XT897_RenderDriver
+#endif
 };
 #endif /* !SDL_RENDER_DISABLED */
 
