@@ -1,59 +1,47 @@
-# SDL2 Library with Virtual GPU Support for Miyoo Mini (Plus)
- - [Miyoo Mini (Plus)](#miyoo-mini-plus)
-   - Build from Scratch
-     - How to prepare the build environment (Docker)
-     - How to build all libraries
-     - How to pack the release build
-     - How to delete the build environment (Docker)
+# Introduction
+ ![image](images/xt897.jpg) ![image](images/xt894.jpg)
 
 &nbsp;
 
-## Miyoo Mini (Plus)
-![image](images/mmiyoo/mm.jpg) ![image](images/mmiyoo/mmp.jpg)  
+This repository contains the SDL v2.0 source code, ported for the following handheld devices:  
+- Motorola Photon Q (XT897)  
+  Utilizes Wayland Client for rendering and is only supported on Sailfish OS v4.4.0.68.
+- Motorola Droid 4 (XT894)  
+  Utilizes Wayland Client for rendering and is only supported on Sailfish OS v4.6.0.15.
 
 &nbsp;
 
-### Build from Scratch
-#### How to prepare the build environment (Docker)
+All dependent libraries are stored in the "dependency" folder and need be built manually after building the SDL library.
 ```
-$ sudo docker build -t mmiyoo .
-```
-
-#### How to build all libraries (SDL2 and virtual GPU)
-```
-$ sudo docker run -it --rm -v $(pwd):/sdl2_miyoo mmiyoo /bin/bash
-# cd /sdl2_miyoo
-# rm -rf swiftshader/build/*
-# make cfg
-# make
+SDL2_net-2.2.0.tar.gz
+SDL2_ttf-2.20.2.tar.gz
+SDL2_image-2.8.1.tar.gz
+SDL2_mixer-2.6.3.tar.gz
 ```
 
-#### How to build the SDL2 library only
+&nbsp;
+
+# How to Build the Source Code
+## Motorola Photon Q (XT897)
 ```
-$ sudo docker run -it --rm -v $(pwd):/sdl2_miyoo mmiyoo /bin/bash
-# cd /sdl2_miyoo
-# make clean
-# make cfg
-# make sdl2
+$ cd
+$ git clone https://github.com/steward-fu/sdl2
+$ cd sdl2/sdl2
+$ ./autogen.sh
+$ ./configure --enable-video-xt897 --disable-video-opengl --disable-video-opengles --disable-video-opengles2 --build=arm-linux
+$ make -j4
+$ sudo make install
 ```
 
-#### How to build the virtual GPU (swiftshader) library only
-```
-$ sudo docker run -it --rm -v $(pwd):/sdl2_miyoo mmiyoo /bin/bash
-# cd /sdl2_miyoo
-# rm -rf swiftshader/build/*
-# make clean
-# make cfg
-# make gpu
-```
+&nbsp;
 
-#### How to build the example
+## Motorola Droid 4 (XT894)
 ```
-$ sudo docker run -it --rm -v $(pwd):/sdl2_miyoo mmiyoo /bin/bash
-# make example
-```
-
-#### How to delete the build environment (Docker)
-```
-$ sudo docker image rm mmiyoo
+$ cd
+$ git clone https://github.com/steward-fu/sdl2
+$ cd sdl2/sdl2
+$ ./autogen.sh
+$ ./configure --enable-video-xt894 --disable-video-opengl --disable-video-opengles --disable-video-opengles2 --build=arm-linux
+$ make -j4
+$ sudo make install
 ```
