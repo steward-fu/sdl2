@@ -153,6 +153,10 @@ SDL_InitSubSystem(Uint32 flags)
 {
     Uint32 flags_initialized = 0;
 
+#if SDL_VIDEO_DRIVER_MINI
+	SDL_setenv("SDL_VIDEODRIVER", "mini", 1);
+#endif
+
 #if SDL_VIDEO_DRIVER_A30
 	SDL_setenv("SDL_VIDEODRIVER", "a30", 1);
 #endif

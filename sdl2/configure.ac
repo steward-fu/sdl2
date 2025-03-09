@@ -2481,10 +2481,8 @@ CheckMiniAudio()
         SOURCES="$SOURCES $srcdir/src/audio/mini/*.c"
         have_audio=yes
         have_audio_mini=yes
-        if test x$HOST = xarm-linux; then
-            EXTRA_CFLAGS="$EXTRA_CFLAGS -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L../mini/lib -lmi_ao -lshmvar -lmi_common -lmi_sys -lmi_gfx"
-        fi
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljson-c -L../mini/lib -lmi_ao -lshmvar -lmi_common -lmi_sys -lmi_gfx"
         SUMMARY_audio="${SUMMARY_audio} mini"
     fi
 }

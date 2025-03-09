@@ -217,7 +217,6 @@ extern SDL_JoystickDriver SDL_OS2_JoystickDriver;
 extern SDL_JoystickDriver SDL_PSP_JoystickDriver;
 extern SDL_JoystickDriver SDL_VITA_JoystickDriver;
 extern SDL_JoystickDriver SDL_A30_JoystickDriver;
-extern SDL_JoystickDriver SDL_MMIYOO_JoystickDriver;
 
 #endif /* SDL_sysjoystick_h_ */
 

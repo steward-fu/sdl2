@@ -58,7 +58,7 @@ $ sudo mv a30 /opt
 $ git clone https://github.com/steward-fu/sdl2
 $ cd sdl2
 $ make -f Makefile.a30 cfg
-$ make -f Makefile.a30
+$ make -f Makefile.a30 sdl2
 ```
 
 &nbsp;
@@ -85,4 +85,15 @@ $ ./autogen.sh
 $ ./configure --enable-video-xt894 --disable-video-opengl --disable-video-opengles --disable-video-opengles2 --build=arm-linux
 $ make -j4
 $ sudo make install
+```
+
+&nbsp;
+
+# How to Run the Program with SDL Library
+## Miyoo Mini
+Place libSDL2-2.0.so.0, libEGL.so, libGLESv2.so, libjson-c.so.5 and the executable file in the same folder.
+```
+# kill -STOP `pidof MainUI`
+# LD_LIBRARY_PATH=.:/config/lib:/mnt/SDCARD/miyoo/lib ./xxx
+# kill -CONT `pidof MainUI`
 ```
