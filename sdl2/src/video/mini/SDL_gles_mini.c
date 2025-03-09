@@ -18,16 +18,19 @@ EGLBoolean eglUpdateBufferSettings(EGLDisplay display, EGLSurface surface, void 
 
 int glLoadLibrary(_THIS, const char *name)
 {
+    debug("%s\n", __func__);
     return 0;
 }
 
 void *glGetProcAddress(_THIS, const char *proc)
 {
+    debug("%s\n", __func__);
     return eglGetProcAddress(proc);
 }
 
 void glUnloadLibrary(_THIS)
 {
+    debug("%s\n", __func__);
     eglTerminate(_this->gl_data->display);
 }
 
@@ -44,7 +47,10 @@ SDL_GLContext glCreateContext(_THIS, SDL_Window *window)
         EGLint client_version[2];
         EGLint none;
     } egl_ctx_attr = {
-        .client_version = { EGL_CONTEXT_CLIENT_VERSION, 2 },
+        .client_version = {
+            EGL_CONTEXT_CLIENT_VERSION,
+            2
+        },
         .none = EGL_NONE
     };
 
@@ -52,24 +58,27 @@ SDL_GLContext glCreateContext(_THIS, SDL_Window *window)
         EGLint render_buffer[2];
         EGLint none;
     } egl_surf_attr = {
-        .render_buffer = { EGL_RENDER_BUFFER, EGL_BACK_BUFFER },
+        .render_buffer = {
+            EGL_RENDER_BUFFER,
+            EGL_BACK_BUFFER
+        },
         .none = EGL_NONE
     };
 
+    debug("%s, display=%p\n", __func__, display);
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    printf(PREFIX"EGL Display %p\n", display);
     eglInitialize(display, &majorVersion, &minorVersion);
     eglGetConfigs(display, NULL, 0, &numConfigs);
     cfgs = SDL_malloc(numConfigs * sizeof(EGLConfig));
     if (cfgs == NULL) {
-        printf(PREFIX"Failed to allocate memory for EGL config\n");
+        debug("%s, failed to allocate memory for EGL config\n", __func__);
         return NULL;
     }
 
     rc = eglGetConfigs(display, cfgs, numConfigs, &numConfigs);
     if (rc != EGL_TRUE) {
         SDL_free(cfgs);
-        printf(PREFIX"Failed to get EGL config\n");
+        debug("%s, failed to get EGL config\n", __func__);
         return NULL;
     }
 
@@ -93,52 +102,56 @@ SDL_GLContext glCreateContext(_THIS, SDL_Window *window)
         break;
     }
     SDL_free(cfgs);
-    printf(PREFIX"EGL Config %p\n", config);
+    debug("%s, EGL Config=%p\n", __func__, config);
 
     context = eglCreateContext(display, config, EGL_NO_CONTEXT, (EGLint *)&egl_ctx_attr);
     if (context == EGL_NO_CONTEXT) {
-        printf(PREFIX"Failed to create EGL context\n");
+        debug("%s, failed to create EGL context\n", __func__);
         return NULL;
     }
 
     surface = eglCreateWindowSurface(display, config, 0, (EGLint*)&egl_surf_attr);
-    printf(PREFIX"EGL Surface %p\n", surface);
+    debug("%s, EGL Surface=%p\n", __func__, surface);
     if (surface == EGL_NO_SURFACE) {
-        printf(PREFIX"Failed to create EGL surface\n");
+        debug("%s, failed to create EGL surface\n", __func__);
         return NULL;
     }
 
-    printf(PREFIX"Passing Buffer Settings (cb %p)\n", fb_cb);
+    debug("%s, callback=%p\n", __func__, fb_cb);
     eglMakeCurrent(display, surface, surface, context);
     eglUpdateBufferSettings(display, surface, fb_cb, NULL, NULL);
-    printf(PREFIX"Prepared EGL successfully\n");
+    debug("%s, initialized EGL successfully\n", __func__);
     return context;
 }
 
 int glSetSwapInterval(_THIS, int interval)
 {
+    debug("%s\n", __func__);
     return 0;
 }
 
 int glUpdateBufferSettings(void *cb)
 {
     fb_cb = cb;
-    printf(PREFIX"Updated Buffer Settings (cb %p)\n", cb);
+    debug("%s, callback=%p\n", __func__, cb);
     return 0;
 }
 
 int glSwapWindow(_THIS, SDL_Window *window)
 {
+    debug("%s\n", __func__);
     return eglSwapBuffers(display, surface) == EGL_TRUE ? 0 : -1;
 }
 
 int glMakeCurrent(_THIS, SDL_Window *window, SDL_GLContext context)
 {
+    debug("%s\n", __func__);
     return 0;
 }
 
 void glDeleteContext(_THIS, SDL_GLContext context)
 {
+    debug("%s\n", __func__);
 }
 
 #endif

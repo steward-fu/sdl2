@@ -6,25 +6,33 @@
 #if SDL_VIDEO_DRIVER_MINI
 
 #include "../SDL_sysvideo.h"
+
+#include "SDL_video_mini.h"
 #include "SDL_fb_mini.h"
 
-#define MINI_SURFACE "_SDL_MiniSurface"
+#define MINI_SURFACE "SDL_MiniSurface"
 
 int Mini_CreateWindowFramebuffer(_THIS, SDL_Window *window, Uint32 *format, void **pixels, int *pitch)
 {
-    SDL_Surface *surface;
-    const Uint32 surface_format = SDL_PIXELFORMAT_RGB888;
-    int w, h;
-    int bpp;
-    Uint32 Rmask, Gmask, Bmask, Amask;
+    int w = 0;
+    int h = 0;
+    int bpp = 0;
+    uint32_t Rmask = 0;
+    uint32_t Gmask = 0;
+    uint32_t Bmask = 0;
+    uint32_t Amask = 0;
+    SDL_Surface *surface = NULL;
+    const uint32_t surface_format = SDL_PIXELFORMAT_RGB888;
 
+    debug("%s\n", __func__);
     surface = (SDL_Surface *) SDL_GetWindowData(window, MINI_SURFACE);
     SDL_FreeSurface(surface);
 
     SDL_PixelFormatEnumToMasks(surface_format, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
     SDL_GetWindowSize(window, &w, &h);
     surface = SDL_CreateRGBSurface(0, w, h, bpp, Rmask, Gmask, Bmask, Amask);
-    if(!surface) {
+    if (!surface) {
+        debug("%s, failed to create window surface\n", __func__);
         return -1;
     }
 
@@ -37,28 +45,15 @@ int Mini_CreateWindowFramebuffer(_THIS, SDL_Window *window, Uint32 *format, void
 
 int Mini_UpdateWindowFramebuffer(_THIS, SDL_Window *window, const SDL_Rect *rects, int numrects)
 {
-    static int frame_number;
-    SDL_Surface *surface;
-
-    surface = (SDL_Surface *) SDL_GetWindowData(window, MINI_SURFACE);
-    if(!surface) {
-        return SDL_SetError("Couldn't find mini surface for window");
-    }
-
-    if(SDL_getenv("SDL_VIDEO_Mini_SAVE_FRAMES")) {
-        char file[128];
-        SDL_snprintf(file, sizeof(file), "SDL_window%" SDL_PRIu32 "-%8.8d.bmp",
-                     SDL_GetWindowID(window), ++frame_number);
-        SDL_SaveBMP(surface, file);
-    }
+    debug("%s\n", __func__);
     return 0;
 }
 
 void Mini_DestroyWindowFramebuffer(_THIS, SDL_Window *window)
 {
-    SDL_Surface *surface;
+    SDL_Surface *surface = (SDL_Surface *) SDL_SetWindowData(window, MINI_SURFACE, NULL);
 
-    surface = (SDL_Surface *) SDL_SetWindowData(window, MINI_SURFACE, NULL);
+    debug("%s\n", __func__);
     SDL_FreeSurface(surface);
 }
 

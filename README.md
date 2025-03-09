@@ -15,6 +15,7 @@ This repository contains the SDL v2.0 source code, ported for the following hand
 
 All dependent libraries are stored in the "dependency" folder and need be built manually after building the SDL library.
 ```
+json-c-0.15.tar.gz
 SDL2_net-2.2.0.tar.gz
 SDL2_ttf-2.20.2.tar.gz
 SDL2_image-2.8.1.tar.gz

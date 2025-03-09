@@ -1,8 +1,8 @@
 // LGPL-2.1 License
 // (C) 2025 Steward Fu <steward.fu@gmail.com>
 
-#ifndef __SDL_OPENGLES_MINI_H__
-#define __SDL_OPENGLES_MINI_H__
+#ifndef __SDL_GLES_MINI_H__
+#define __SDL_GLES_MINI_H__
 
 #include "../SDL_sysvideo.h"
 

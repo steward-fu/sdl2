@@ -20,299 +20,149 @@
 #include "SDL_video_mini.h"
 #include "SDL_event_mini.h"
 
-#define UP      103
-#define DOWN    108
-#define LEFT    105
-#define RIGHT   106
-#define A       57
-#define B       29
-#define X       42
-#define Y       56
-#define L1      18
-#define L2      15
-#define R1      20
-#define R2      14
-#define START   28
-#define SELECT  97
-#define MENU    1
-#define POWER   116
-#define VOLUP   115
-#define VOLDOWN 114
-
-Mini_EventInfo evt = {0};
-
-extern GFX gfx;
-extern Mini_VideoInfo vid;
-
 static int running = 0;
-static int event_fd = -1;
-static int lower_speed = 0;
-static SDL_sem *event_sem = NULL;
 static SDL_Thread *thread = NULL;
-static uint32_t pre_ticks = 0;
-static uint32_t pre_keypad_bitmaps = 0;
 
-extern int FB_W;
-extern int FB_H;
+uint8_t mykey[KEY_MAX][2] = { 0 };
+static SDL_Scancode mymap[KEY_MAX] = { 0 };
 
-const SDL_Scancode code[]={
-    SDLK_UP,            // UP
-    SDLK_DOWN,          // DOWN
-    SDLK_LEFT,          // LEFT
-    SDLK_RIGHT,         // RIGHT
-    SDLK_LCTRL,         // A
-    SDLK_LALT,          // B
-    SDLK_LSHIFT,        // X
-    SDLK_SPACE,         // Y
-    SDLK_TAB,           // L1
-    SDLK_BACKSPACE,     // R1
-    SDLK_PAGEDOWN,      // L2
-    SDLK_PAGEUP,        // R2
-    SDLK_ESCAPE,        // SELECT
-    SDLK_RETURN,        // START
-    SDLK_HOME,          // MENU
-    SDLK_0,             // QUICK SAVE
-    SDLK_1,             // QUICK LOAD
-    SDLK_2,             // FAST FORWARD
-    SDLK_3,             // EXIT
-    SDLK_HOME,          // MENU (Onion system)
-};
-
-int volume_inc(void);
-int volume_dec(void);
-
-static void check_mouse_pos(void)
+int Mini_InputHandler(void *data)
 {
-    if (evt.mouse.y < evt.mouse.miny) {
-        evt.mouse.y = evt.mouse.miny;
-    }
-    if (evt.mouse.y > evt.mouse.maxy) {
-        evt.mouse.y = evt.mouse.maxy;
-    }
-    if (evt.mouse.x < evt.mouse.minx) {
-        evt.mouse.x = evt.mouse.minx;
-    }
-    if (evt.mouse.x >= evt.mouse.maxx) {
-        evt.mouse.x = evt.mouse.maxx;
-    }
-}
-
-static int get_move_interval(int type)
-{
-    float move = 0.0;
-    long yv = 35000;
-    long xv = 30000;
-
-    if (lower_speed) {
-        yv*= 2;
-        xv*= 2;
-    }
-
-    move = ((float)clock() - pre_ticks) / ((type == 0) ? xv : yv);
-    if (move <= 0.0) {
-        move = 1.0;
-    }
-    return (int)(1.0 * move);
-}
-
-static void set_key(uint32_t bit, int val)
-{
-    if (val) {
-        evt.keypad.bitmaps|= (1 << bit);
-    }
-    else {
-        evt.keypad.bitmaps&= ~(1 << bit);
-    }
-}
-
-int EventUpdate(void *data)
-{
+    int fd = -1;
     struct input_event ev = {0};
 
-    uint32_t l1 = L1;
-    uint32_t r1 = R1;
-    uint32_t l2 = L2;
-    uint32_t r2 = R2;
+    debug("%s++\n", __func__);
+    fd = open("/dev/input/event0", O_RDONLY);
+    if (fd < 0){
+        debug("%s, failed to open input device\n", __func__);
+        return 0;
+    }
 
-    uint32_t a = A;
-    uint32_t b = B;
-    uint32_t x = X;
-    uint32_t y = Y;
-
-    uint32_t up = UP;
-    uint32_t down = DOWN;
-    uint32_t left = LEFT;
-    uint32_t right = RIGHT;
-
+    running = 1;
+    fcntl(fd, F_SETFL, O_NONBLOCK);
     while (running) {
-        SDL_SemWait(event_sem);
-
-        up = UP;
-        down = DOWN;
-        left = LEFT;
-        right = RIGHT;
-
-        a = A;
-        b = B;
-        x = X;
-        y = Y;
-
-        l1 = L1;
-        l2 = L2;
-        r1 = R1;
-        r2 = R2;
-
-
-        if (event_fd > 0) {
-            if (read(event_fd, &ev, sizeof(struct input_event))) {
-                if ((ev.type == EV_KEY) && (ev.value != 2)) {
-                    if (ev.code == l1)      { set_key(MYKEY_L1,    ev.value); }
-                    if (ev.code == r1)      { set_key(MYKEY_R1,    ev.value); }
-                    if (ev.code == l2)      { set_key(MYKEY_L2,    ev.value); }
-                    if (ev.code == r2)      { set_key(MYKEY_R2,    ev.value); }
-                    if (ev.code == up)      { set_key(MYKEY_UP,    ev.value); }
-                    if (ev.code == down)    { set_key(MYKEY_DOWN,  ev.value); }
-                    if (ev.code == left)    { set_key(MYKEY_LEFT,  ev.value); }
-                    if (ev.code == right)   { set_key(MYKEY_RIGHT, ev.value); }
-                    if (ev.code == a)       { set_key(MYKEY_A,     ev.value); }
-                    if (ev.code == b)       { set_key(MYKEY_B,     ev.value); }
-                    if (ev.code == x)       { set_key(MYKEY_X,     ev.value); }
-                    if (ev.code == y)       { set_key(MYKEY_Y,     ev.value); }
-
-                    switch (ev.code) {
-                    case START:   set_key(MYKEY_START, ev.value);   break;
-                    case SELECT:  set_key(MYKEY_SELECT, ev.value);  break;
-                    case MENU:    set_key(MYKEY_MENU, ev.value);    break;
-                    case POWER:   set_key(MYKEY_POWER, ev.value);   break;
-                    case VOLUP:   set_key(MYKEY_VOLUP, ev.value);   break;
-                    case VOLDOWN: set_key(MYKEY_VOLDOWN, ev.value); break;
-                    }
-                }
-
-                if (!(evt.keypad.bitmaps & 0x0f)) {
-                    pre_ticks = clock();
-                }
+        if (read(fd, &ev, sizeof(struct input_event)) > 0) {
+            if (ev.type == EV_KEY) {
+                mykey[ev.code][ev.value] = 1;
+                debug("%s, code:%d, value:%d\n", __func__, ev.code, ev.value);
             }
         }
-        SDL_SemPost(event_sem);
-        usleep(1000000 / 60);
+        usleep(1000);
     }
     
+    if (fd > 0) {
+        close(fd);
+        fd = -1;
+    }
+    debug("%s--\n", __func__);
     return 0;
 }
 
 void Mini_EventInit(void)
 {
-    pre_keypad_bitmaps = 0;
-    memset(&evt, 0, sizeof(evt));
-    evt.mouse.minx = 0;
-    evt.mouse.miny = 0;
-    evt.mouse.maxx = FB_W;
-    evt.mouse.maxy = FB_H;
-    evt.mouse.x = (evt.mouse.maxx - evt.mouse.minx) / 2;
-    evt.mouse.y = (evt.mouse.maxy - evt.mouse.miny) / 2;
+    debug("%s\n", __func__);
 
-    evt.mode = Mini_KEYPAD_MODE;
+     mymap[KEY_0] = SDLK_0;
+     mymap[KEY_1] = SDLK_1;
+     mymap[KEY_2] = SDLK_2;
+     mymap[KEY_3] = SDLK_3;
+     mymap[KEY_4] = SDLK_4;
+     mymap[KEY_5] = SDLK_5;
+     mymap[KEY_6] = SDLK_6;
+     mymap[KEY_7] = SDLK_7;
+     mymap[KEY_8] = SDLK_8;
+     mymap[KEY_9] = SDLK_9;
 
-    event_fd = open("/dev/input/event0", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
-    if(event_fd < 0){
-        printf(PREFIX"failed to open /dev/input/event0\n");
-    }
+     mymap[KEY_A] = SDLK_a;
+     mymap[KEY_B] = SDLK_b;
+     mymap[KEY_C] = SDLK_c;
+     mymap[KEY_D] = SDLK_d;
+     mymap[KEY_E] = SDLK_e;
+     mymap[KEY_F] = SDLK_f;
+     mymap[KEY_G] = SDLK_g;
+     mymap[KEY_H] = SDLK_h;
+     mymap[KEY_I] = SDLK_i;
+     mymap[KEY_J] = SDLK_j;
+     mymap[KEY_K] = SDLK_k;
+     mymap[KEY_L] = SDLK_l;
+     mymap[KEY_M] = SDLK_m;
+     mymap[KEY_N] = SDLK_n;
+     mymap[KEY_O] = SDLK_o;
+     mymap[KEY_P] = SDLK_p;
+     mymap[KEY_Q] = SDLK_q;
+     mymap[KEY_R] = SDLK_r;
+     mymap[KEY_S] = SDLK_s;
+     mymap[KEY_T] = SDLK_t;
+     mymap[KEY_U] = SDLK_u;
+     mymap[KEY_V] = SDLK_v;
+     mymap[KEY_W] = SDLK_w;
+     mymap[KEY_X] = SDLK_x;
+     mymap[KEY_Y] = SDLK_y;
+     mymap[KEY_Z] = SDLK_z;
 
-    if((event_sem =  SDL_CreateSemaphore(1)) == NULL) {
-        SDL_SetError("Can't create input semaphore");
-        return;
-    }
+     mymap[KEY_UP] = SDLK_UP;
+     mymap[KEY_DOWN] = SDLK_DOWN;
+     mymap[KEY_LEFT] = SDLK_LEFT;
+     mymap[KEY_RIGHT] = SDLK_RIGHT;
+     
+     mymap[KEY_ESC] = SDLK_ESCAPE;
+     mymap[KEY_SPACE] = SDLK_SPACE;
+     mymap[KEY_CAPSLOCK] = SDLK_CAPSLOCK;
+     mymap[KEY_BACKSPACE] = SDLK_BACKSPACE;
+     mymap[KEY_TAB] = SDLK_TAB;
+     mymap[KEY_GRAVE] = SDLK_BACKQUOTE;
+     mymap[KEY_COMMA] = SDLK_COMMA;
+     mymap[KEY_DOT] = SDLK_PERIOD;
+     mymap[KEY_APOSTROPHE] = SDLK_QUOTEDBL;
+     mymap[KEY_LEFTBRACE] = SDLK_LEFTBRACKET;
+     mymap[KEY_RIGHTBRACE] = SDLK_RIGHTBRACKET;
+     mymap[KEY_ENTER] = SDLK_RETURN;
+     mymap[KEY_MINUS] = SDLK_MINUS;
+     mymap[KEY_EQUAL] = SDLK_EQUALS;
+     mymap[KEY_SLASH] = SDLK_SLASH;
+     mymap[KEY_BACKSLASH] = SDLK_BACKSLASH;
 
-    running = 1;
-    if((thread = SDL_CreateThreadInternal(EventUpdate, "MINIInputThread", 4096, NULL)) == NULL) {
-        SDL_SetError("Can't create input thread");
-        return;
+     mymap[KEY_F1] = SDLK_F1;
+     mymap[KEY_F2] = SDLK_F2;
+     mymap[KEY_F3] = SDLK_F3;
+     mymap[KEY_F4] = SDLK_F4;
+     mymap[KEY_F5] = SDLK_F5;
+
+    mymap[KEY_RIGHTSHIFT] = SDLK_RSHIFT;
+    mymap[KEY_LEFTSHIFT] = SDLK_LSHIFT;
+    mymap[KEY_RIGHTCTRL] = SDLK_RCTRL;
+    mymap[KEY_LEFTCTRL] = SDLK_LCTRL;
+    mymap[KEY_RIGHTALT] = SDLK_RALT;
+    mymap[KEY_LEFTALT] = SDLK_LALT;
+
+    if ((thread = SDL_CreateThreadInternal(Mini_InputHandler, "Mini_InputHandler", 4096, NULL)) == NULL) {
+        debug("%s, failed to create input thread\n", __func__);
     }
 }
 
-void Mini_EventDeinit(void)
+void Mini_EventQuit(void)
 {
+    debug("%s\n", __func__);
     running = 0;
     SDL_WaitThread(thread, NULL);
-    SDL_DestroySemaphore(event_sem);
-    if(event_fd > 0) {
-        close(event_fd);
-        event_fd = -1;
-    }
-
 }
 
 void Mini_PumpEvents(_THIS)
 {
-    SDL_SemWait(event_sem);
-    if (evt.mode == Mini_KEYPAD_MODE) {
-        if (pre_keypad_bitmaps != evt.keypad.bitmaps) {
-            int cc = 0;
-            uint32_t bit = 0;
-            uint32_t changed = pre_keypad_bitmaps ^ evt.keypad.bitmaps;
+    int c0 = 0;
 
-            for (cc=0; cc<=MYKEY_LAST_BITS; cc++) {
-                bit = 1 << cc;
-                if (changed & bit) {
-                    SDL_SendKeyboardKey((evt.keypad.bitmaps & bit) ? SDL_PRESSED : SDL_RELEASED, SDL_GetScancodeFromKey(code[cc]));
-                }
-            }
-
-            pre_keypad_bitmaps = evt.keypad.bitmaps;
+    for (c0 = 0; c0 < KEY_MAX; c0++) {
+        if (mykey[c0][1] && mymap[c0]) {
+            mykey[c0][1] = 0;
+            debug("%s, key pressed: %d\n", __func__, mymap[c0]);
+            SDL_SendKeyboardKey(SDL_PRESSED, SDL_GetScancodeFromKey(mymap[c0]));
+        }
+        if (mykey[c0][0] && mymap[c0]) {
+            mykey[c0][0] = 0;
+            debug("%s, key released: %d\n", __func__, mymap[c0]);
+            SDL_SendKeyboardKey(SDL_RELEASED, SDL_GetScancodeFromKey(mymap[c0]));
         }
     }
-    else {
-        int updated = 0;
-        if (pre_keypad_bitmaps != evt.keypad.bitmaps) {
-            uint32_t cc = 0;
-            uint32_t bit = 0;
-            uint32_t changed = pre_keypad_bitmaps ^ evt.keypad.bitmaps;
-
-            if (changed & (1 << MYKEY_A)) {
-                SDL_SendMouseButton(vid.window, 0, (evt.keypad.bitmaps & (1 << MYKEY_A)) ? SDL_PRESSED : SDL_RELEASED, SDL_BUTTON_LEFT);
-            }
-
-            for (cc=0; cc<=MYKEY_LAST_BITS; cc++) {
-                bit = 1 << cc;
-                if ((cc == MYKEY_FF) || (cc == MYKEY_QSAVE) || (cc == MYKEY_QLOAD) || (cc == MYKEY_EXIT) || (cc == MYKEY_R2)) {
-                    if (changed & bit) {
-                        SDL_SendKeyboardKey((evt.keypad.bitmaps & bit) ? SDL_PRESSED : SDL_RELEASED, SDL_GetScancodeFromKey(code[cc]));
-                    }
-                }
-                if (cc == MYKEY_R1) {
-                    if (changed & bit) {
-                        lower_speed = (evt.keypad.bitmaps & bit);
-                    }
-                }
-            }
-        }
-
-        if (evt.keypad.bitmaps & (1 << MYKEY_UP)) {
-            updated = 1;
-            evt.mouse.y-= get_move_interval(1);
-        }
-        if (evt.keypad.bitmaps & (1 << MYKEY_DOWN)) {
-            updated = 1;
-            evt.mouse.y+= get_move_interval(1);
-        }
-        if (evt.keypad.bitmaps & (1 << MYKEY_LEFT)) {
-            updated = 1;
-            evt.mouse.x-= get_move_interval(0);
-        }
-        if (evt.keypad.bitmaps & (1 << MYKEY_RIGHT)) {
-            updated = 1;
-            evt.mouse.x+= get_move_interval(0);
-        }
-        check_mouse_pos();
-
-        if(updated){
-            SDL_SendMouseMotion(vid.window, 0, 0, evt.mouse.x, evt.mouse.y);
-        }
-
-        pre_keypad_bitmaps = evt.keypad.bitmaps;
-    }
-    SDL_SemPost(event_sem);
 }
 
 #endif

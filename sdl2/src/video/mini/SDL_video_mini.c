@@ -37,40 +37,19 @@
 #include "SDL_gles_mini.h"
 #include "SDL_fb_mini.h"
 
-GFX gfx = {0};
-Mini_VideoInfo vid={0};
+GFX gfx = { 0 };
 
 int FB_W = 0;
 int FB_H = 0;
 int FB_SIZE = 0;
 int TMP_SIZE = 0;
-int need_screen_rotation_helper = 0;
-
-static pthread_t thread;
-static int is_running = 0;
-static SDL_Surface *cvt = NULL;
-
-extern Mini_EventInfo evt;
+SDL_Window *vid_win = NULL;
 
 static int Mini_VideoInit(_THIS);
 static int Mini_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode);
 static void Mini_VideoQuit(_THIS);
 
-static void *video_handler(void *threadid)
-{
-    debug("%s\n", __func__);
-    while (is_running) {
-        if (gfx.action == GFX_ACTION_FLIP) {
-            gfx.action = GFX_ACTION_NONE;
-            My_QueueCopy(gfx.thread.texture, get_pixels(gfx.thread.texture), &gfx.thread.srt, &gfx.thread.drt);
-            GFX_Flip();
-        }
-        usleep(1);
-    }
-    pthread_exit(NULL);
-}
-
-int fb_init(void)
+int Mini_InitGFX(void)
 {
     debug("%s\n", __func__);
     MI_SYS_Init();
@@ -96,7 +75,7 @@ int fb_init(void)
     return 0;
 }
 
-int fb_quit(void)
+int Mini_QuitGFX(void)
 {
     debug("%s\n", __func__);
     MI_SYS_Munmap(gfx.fb.virAddr, TMP_SIZE);
@@ -113,39 +92,19 @@ int fb_quit(void)
 void GFX_Init(void)
 {
     debug("%s\n", __func__);
-    fb_init();
-    gfx.thread.pixels = malloc(TMP_SIZE);
-    cvt = SDL_CreateRGBSurface(SDL_SWSURFACE, FB_W, FB_H, 32, 0, 0, 0, 0);
-
-    is_running = 1;
-    gfx.action = GFX_ACTION_NONE;
-    pthread_create(&thread, NULL, video_handler, (void *)NULL);
+    Mini_InitGFX();
 }
 
 void GFX_Quit(void)
 {
-    void *ret = NULL;
-
     debug("%s\n", __func__);
-    is_running = 0;
-    pthread_join(thread, &ret);
+
     GFX_Clear();
-
-    fb_quit();
-    if (gfx.thread.pixels) {
-        free(gfx.thread.pixels);
-        gfx.thread.pixels = NULL;
-    }
-
+    Mini_QuitGFX();
     gfx.vinfo.yoffset = 0;
     ioctl(gfx.fb_dev, FBIOPUT_VSCREENINFO, &gfx.vinfo);
     close(gfx.fb_dev);
     gfx.fb_dev = 0;
-
-    if (cvt) {
-        SDL_FreeSurface(cvt);
-        cvt = NULL;
-    }
 }
 
 void GFX_Clear(void)
@@ -233,7 +192,7 @@ void Mini_DestroyWindow(_THIS, SDL_Window *window)
 
 int Mini_CreateWindow(_THIS, SDL_Window *window)
 {
-    vid.window = window;
+    vid_win = window;
     SDL_SetMouseFocus(window);
     glUpdateBufferSettings(GFX_CB);
     debug("%s, win=%p, w=%d, h=%d\n", __func__, window, window->w, window->h);
@@ -390,6 +349,7 @@ int Mini_VideoInit(_THIS)
         }
     }
 
+    debug("%s, screen=%dx%d\n", __func__, FB_W, FB_H);
     GFX_Init();
     Mini_EventInit();
     return 0;
@@ -404,7 +364,7 @@ static int Mini_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode
 void Mini_VideoQuit(_THIS)
 {
     debug("%s\n", __func__);
-    Mini_EventDeinit();
+    Mini_EventQuit();
 }
 
 #endif
