@@ -1,5 +1,5 @@
 # Introduction
- ![image](images/xt897.jpg) ![image](images/xt894.jpg)
+![image](images/miyoo-mini.jpg) ![image](images/miyoo-mini-plus.jpg) ![image](images/miyoo-a30.jpg) ![image](images/xt897.jpg) ![image](images/xt894.jpg)
 
 &nbsp;
 
@@ -22,6 +22,36 @@ SDL2_mixer-2.6.3.tar.gz
 &nbsp;
 
 # How to Build the Source Code
+## Miyoo Mini (Plus)
+```
+$ cd
+$ wget https://github.com/steward-fu/website/releases/download/miyoo-mini/mini_toolchain-v1.0.tar.gz
+$ tar xvf mini_toolchain-v1.0.tar.gz
+$ sudo mini /opt
+
+$ git clone https://github.com/steward-fu/sdl2
+$ cd sdl2
+$ make -f Makefile.mini cfg
+$ make -f Makefile.mini
+```
+
+&nbsp;
+
+## Miyoo A30
+```
+$ cd
+$ wget https://github.com/steward-fu/website/releases/download/miyoo-a30/a30_toolchain-v1.0.tar.gz
+$ tar xvf a30_toolchain-v1.0.tar.gz
+$ sudo mv a30 /opt
+
+$ git clone https://github.com/steward-fu/sdl2
+$ cd sdl2
+$ make -f Makefile.a30 cfg
+$ make -f Makefile.a30
+```
+
+&nbsp;
+
 ## Motorola Photon Q (XT897)
 ```
 $ cd
