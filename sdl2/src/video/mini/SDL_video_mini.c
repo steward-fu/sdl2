@@ -174,8 +174,13 @@ void GFX_Flip(void)
 
 void* GFX_CB(void)
 {
+    SDL_Rect srt = {0, 0, FB_W, FB_H};
+    SDL_Rect drt = {0, 0, FB_W, FB_H};
+
     debug("%s\n", __func__);
-    return NULL;
+    GFX_Copy(gfx.tmp.virAddr, srt, drt, FB_W * FB_BPP, 0, E_MI_GFX_ROTATE_180);
+    GFX_Flip();
+    return gfx.tmp.virAddr;
 }
 
 static void Mini_DeleteDevice(SDL_VideoDevice *device)

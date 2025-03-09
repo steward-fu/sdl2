@@ -37,8 +37,8 @@ if(WIN32)
     )
 elseif(LINUX)
     list(APPEND MAIN_SRC_FILES
-        FrameBufferMMiyoo.cpp
-        FrameBufferMMiyoo.hpp
+        FrameBufferMini.cpp
+        FrameBufferMini.hpp
     )
 elseif(APPLE)
     list(APPEND MAIN_SRC_FILES
