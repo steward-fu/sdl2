@@ -3,8 +3,9 @@ SDL2_CFG+= --enable-joystick
 SDL2_CFG+= --disable-video-opengl
 SDL2_CFG+= --disable-video-opengles
 SDL2_CFG+= --disable-video-opengles2
+SDL2_CFG+= --enable-audio-a30
+SDL2_CFG+= --enable-video-a30
 
-MOD      = a30
 SDL2_INC = -I/opt/a30/arm-a30-linux-gnueabihf/sysroot/usr/include/SDL2
 
 export CROSS=/opt/a30/bin/arm-linux-
@@ -18,8 +19,8 @@ export HOST=arm-linux
 include Makefile.mk
 
 .PHONY: all
-all: sdl2 example
+all: sdl2
 
 .PHONY: cfg
 cfg:
-	cd sdl2 && ./autogen.sh && MOD=$(MOD) ./configure ${SDL2_CFG} --host=${HOST}
+	cd sdl2 && ./autogen.sh && ./configure ${SDL2_CFG} --host=${HOST}

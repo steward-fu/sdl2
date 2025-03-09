@@ -2398,36 +2398,46 @@ CheckQNXAudio()
     fi
 }
 
+CheckMiniVideo()
+{
+    AC_ARG_ENABLE(video-mini,
+[AS_HELP_STRING([--enable-video-mini], [use Miyoo Mini (Plus) video driver [default=no]])],
+                  , enable_video_mini=no)
+
+    if test x$enable_video_mini = xyes; then
+        AC_DEFINE(SDL_VIDEO_DRIVER_MINI, 1, [ ])
+        AC_DEFINE(SDL_VIDEO_RENDER_MINI, 1, [ ])
+        SOURCES="$SOURCES $srcdir/src/video/mini/*.c"
+        have_video=yes
+        have_video_mini=yes
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DMINI -fPIC -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3 -I../mini/inc -I/opt/mini/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L. -lEGL -lGLESv2"
+        SUMMARY_video="${SUMMARY_video} mini"
+    fi
+}
+
 CheckA30Video()
 {
-    if test x$enable_video = xyes; then
+    AC_ARG_ENABLE(video-a30,
+[AS_HELP_STRING([--enable-video-a30], [use Miyoo A30 video driver [default=no]])],
+                  , enable_video_a30=no)
+
+    if test x$enable_video_a30 = xyes; then
         AC_DEFINE(SDL_VIDEO_DRIVER_A30, 1, [ ])
         AC_DEFINE(SDL_VIDEO_RENDER_A30, 1, [ ])
         SOURCES="$SOURCES $srcdir/src/video/a30/*.c"
         have_video=yes
+        have_video_a30=yes
         EXTRA_CFLAGS="$EXTRA_CFLAGS -fPIC -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3 -I/opt/a30/arm-a30-linux-gnueabihf/sysroot/usr/include/SDL2"
         EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L. -lMali -ldl"
         SUMMARY_video="${SUMMARY_video} a30"
     fi
 }
 
-CheckMMiyooVideo()
-{
-    if test x$enable_video = xyes; then
-        AC_DEFINE(SDL_VIDEO_DRIVER_MMIYOO, 1, [ ])
-        AC_DEFINE(SDL_VIDEO_RENDER_MMIYOO, 1, [ ])
-        SOURCES="$SOURCES $srcdir/src/video/mmiyoo/*.c"
-        have_video=yes
-        EXTRA_CFLAGS="$EXTRA_CFLAGS -DMMIYOO -fPIC -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3 -I../mmiyoo/inc -I/opt/mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2"
-        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ljson-c -L. -lEGL -lGLESv2"
-        SUMMARY_video="${SUMMARY_video} mmiyoo"
-    fi
-}
-
 CheckXT894Video()
 {
     AC_ARG_ENABLE(video-xt894,
-[AS_HELP_STRING([--enable-video-xt894], [use Motorola Droid 4 (XT894) driver [default=no]])],
+[AS_HELP_STRING([--enable-video-xt894], [use Motorola Droid 4 (XT894) video driver [default=no]])],
                   , enable_video_xt894=no)
 
     if test x$enable_video_xt894 = xyes; then
@@ -2435,6 +2445,7 @@ CheckXT894Video()
         AC_DEFINE(SDL_VIDEO_RENDER_XT894, 1, [ ])
         SOURCES="$SOURCES $srcdir/src/video/xt894/*.c"
         have_video=yes
+        have_video_xt894=yes
         EXTRA_CFLAGS="$EXTRA_CFLAGS -DXT894 -I/usr/local/include/SDL2"
         EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -L. -lEGL -lGLESv2"
         SUMMARY_video="${SUMMARY_video} xt894"
@@ -2444,7 +2455,7 @@ CheckXT894Video()
 CheckXT897Video()
 {
     AC_ARG_ENABLE(video-xt897,
-[AS_HELP_STRING([--enable-video-xt897], [use Motorola Photon Q (XT897) driver [default=no]])],
+[AS_HELP_STRING([--enable-video-xt897], [use Motorola Photon Q (XT897) video driver [default=no]])],
                   , enable_video_xt897=no)
 
     if test x$enable_video_xt897 = xyes; then
@@ -2452,23 +2463,29 @@ CheckXT897Video()
         AC_DEFINE(SDL_VIDEO_RENDER_XT897, 1, [ ])
         SOURCES="$SOURCES $srcdir/src/video/xt897/*.c"
         have_video=yes
+        have_video_xt897=yes
         EXTRA_CFLAGS="$EXTRA_CFLAGS -DXT897 -I/usr/local/include/SDL2"
         EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -L. -lEGL -lGLESv2"
         SUMMARY_video="${SUMMARY_video} xt897"
     fi
 }
 
-CheckMMiyooAudio()
+CheckMiniAudio()
 {
-    if test x$enable_audio = xyes; then
-        AC_DEFINE(SDL_AUDIO_DRIVER_MMIYOO, 1, [ ])
-        SOURCES="$SOURCES $srcdir/src/audio/mmiyoo/*.c"
+    AC_ARG_ENABLE(audio-mini,
+[AS_HELP_STRING([--enable-audio-mini], [use Miyoo Mini (Plus) audio driver [default=no]])],
+                  , enable_audio_mini=no)
+
+    if test x$enable_audio_mini = xyes; then
+        AC_DEFINE(SDL_AUDIO_DRIVER_MINI, 1, [ ])
+        SOURCES="$SOURCES $srcdir/src/audio/mini/*.c"
         have_audio=yes
+        have_audio_mini=yes
         if test x$HOST = xarm-linux; then
             EXTRA_CFLAGS="$EXTRA_CFLAGS -mcpu=cortex-a7 -mfpu=neon-vfpv4 -O3"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L../mmiyoo/lib -lmi_ao -lshmvar -lmi_common -lmi_sys -lmi_gfx"
+            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L../mini/lib -lmi_ao -lshmvar -lmi_common -lmi_sys -lmi_gfx"
         fi
-        SUMMARY_audio="${SUMMARY_audio} mmiyoo"
+        SUMMARY_audio="${SUMMARY_audio} mini"
     fi
 }
 
@@ -3756,15 +3773,6 @@ case "$host" in
         esac
 
         case "$MOD" in
-            *a30*)              ARCH=a30
-                CheckA30Video
-                ;;
-            *mmiyoo*)           ARCH=mmiyoo
-                CheckMMiyooVideo
-                ;;
-        esac
-
-        case "$MOD" in
             *)
                 CheckVisibilityHidden
                 ;;
@@ -3800,6 +3808,10 @@ case "$host" in
         CheckGLX
         CheckOpenGL
         CheckOpenGLES
+        CheckMiniVideo
+        CheckMiniAudio
+        CheckA30Video
+        CheckA30Audio
         CheckXT894Video
         CheckXT897Video
         CheckVulkan
@@ -3875,9 +3887,6 @@ case "$host" in
             nto)
                 CheckQNXAudio
             ;;
-            mmiyoo)
-                CheckMMiyooAudio
-            ;;
           esac
         fi
         # Set up files for the joystick library
@@ -3901,16 +3910,6 @@ case "$host" in
                 AC_DEFINE(SDL_JOYSTICK_ANDROID, 1, [ ])
                 SOURCES="$SOURCES $srcdir/src/joystick/android/*.c"
                 SOURCES="$SOURCES $srcdir/src/joystick/steam/*.c"
-                have_joystick=yes
-            ;;
-            mmiyoo)
-                AC_DEFINE(SDL_JOYSTICK_MMIYOO, 1, [ ])
-                SOURCES="$SOURCES $srcdir/src/joystick/mmiyoo/*.c"
-                have_joystick=yes
-            ;;
-            a30)
-                AC_DEFINE(SDL_JOYSTICK_A30, 1, [ ])
-                SOURCES="$SOURCES $srcdir/src/joystick/a30/*.c"
                 have_joystick=yes
             ;;
           esac

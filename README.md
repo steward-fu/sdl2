@@ -4,6 +4,8 @@
 &nbsp;
 
 This repository contains the SDL v2.0 source code, ported for the following handheld devices:  
+- Miyoo Mini (Plus)
+  Utilizes SigmaStar MI GFX for rendering and is only tested on Onion v4.3.1-1.
 - Motorola Photon Q (XT897)  
   Utilizes Wayland Client for rendering and is only supported on Sailfish OS v4.4.0.68.
 - Motorola Droid 4 (XT894)  
@@ -32,7 +34,16 @@ $ sudo mini /opt
 $ git clone https://github.com/steward-fu/sdl2
 $ cd sdl2
 $ make -f Makefile.mini cfg
-$ make -f Makefile.mini
+
+$ make -f Makefile.mini gpu
+$ ls swiftshader/build/lib*
+    swiftshader/build/libEGL.so
+    swiftshader/build/libGLESv2.so
+
+$ make -f Makefile.mini sdl2
+$ ls sdl2/build/.libs/libSDL2-2.0.so.0*
+    sdl2/build/.libs/libSDL2-2.0.so.0
+    sdl2/build/.libs/libSDL2-2.0.so.0.18.2
 ```
 
 &nbsp;
