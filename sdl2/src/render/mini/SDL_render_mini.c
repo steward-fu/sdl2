@@ -24,7 +24,7 @@ typedef struct {
     SDL_bool is_init;
 } Mini_RenderData;
 
-#define MAX_TEXTURE 10
+#define MAX_TEXTURE 100
 
 struct MY_TEXTURE {
     int pitch;
@@ -86,7 +86,7 @@ static int Mini_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture)
 {
     Mini_TextureData *t = (Mini_TextureData *)SDL_calloc(1, sizeof(Mini_TextureData));
 
-    debug("%s\n", __func__);
+    debug("%s, texture=%p\n", __func__, texture);
     if (!t) {
         debug("%s, failed to create texture\n", __func__);
         return SDL_OutOfMemory();
@@ -105,7 +105,6 @@ static int Mini_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture)
 
     texture->driverdata = t;
     update_texture(NULL, texture, NULL, 0);
-    GFX_Clear();
     return 0;
 }
 
@@ -121,7 +120,7 @@ static int Mini_LockTexture(SDL_Renderer *renderer, SDL_Texture *texture, const 
 
 static int Mini_UpdateTexture(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_Rect *rect, const void *pixels, int pitch)
 {
-    debug("%s\n", __func__);
+    debug("%s, texture=%p, pixels=%p\n", __func__, texture, pixels);
     update_texture(texture, texture, pixels, pitch);
     return 0;
 }
@@ -190,18 +189,19 @@ static int Mini_QueueCopy(SDL_Renderer *renderer, SDL_RenderCommand *cmd, SDL_Te
 
     dst.w = dstrect->w * scale;
     dst.h = dstrect->h * scale;
-    dst.x = dstrect->x * scale;
+    dst.x = (vid_win->w - dstrect->x) * scale;
     dst.y = dstrect->y * scale;
     dst.x += ((FB_W - (vid_win->w * scale)) / 2);
     dst.y += ((FB_H - (vid_win->h * scale)) / 2);
 
-    debug("%s, org dst:%.2f,%.2f,%.2f,%.2f\n", __func__, dstrect->x, dstrect->y, dstrect->w, dstrect->h);
-    debug("%s, new src:%d,%d,%d,%d, dst:%d,%d,%d,%d, scale=%.2f\n", __func__, src.x, src.y, src.w, src.h, dst.x, dst.y, dst.w, dst.h, scale);
     pitch = get_pitch(texture);
     if ((pitch == 0) || (pixels == NULL)) {
+        debug("%s, failed to get pitch or pixels (%d, %p)\n", __func__, pitch, pixels);
         return 0;
     }
 
+    debug("%s, texture=%p, src:%d,%d,%d,%d, dst:%d,%d,%d,%d, scale=%.2f, pitch=%d, pixels=%p\n", 
+        __func__, texture, src.x, src.y, src.w, src.h, dst.x, dst.y, dst.w, dst.h, scale, pitch, pixels);
     GFX_Copy(pixels, src, dst, pitch, 0, E_MI_GFX_ROTATE_180);
     return 0;
 }
