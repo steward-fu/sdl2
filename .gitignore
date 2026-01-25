@@ -17,3 +17,7 @@ sdl2/libGLESv2.so
 sdl2/libtool
 sdl2/sdl2-config
 sdl2/test/configure~
+
+sdl2/android-project/.gradle/
+sdl2/android-project/app/.cxx/
+sdl2/android-project/app/build/
