@@ -22,4 +22,4 @@ target_compile_options(SDL2 PRIVATE -Wno-error=declaration-after-statement)
 #add_subdirectory(SDL_ttf)
 
 # Your game and its CMakeLists.txt are in a subfolder named "src"
-#add_subdirectory(src)
+add_subdirectory(src)
