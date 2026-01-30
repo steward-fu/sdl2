@@ -9,7 +9,6 @@ add_library(SDL2_gfx SHARED
     SDL2_gfxPrimitives.c
     SDL2_imageFilter.c
     SDL2_rotozoom.c
-    SDL2_gfxPrimitives.h
 )
 
 target_include_directories(SDL2_gfx PUBLIC

@@ -4,8 +4,8 @@ project(MY_APP)
 
 find_library(SDL2 SDL2)
 find_library(SDL2_gfx SDL2_gfx)
-
-#find_package(SDL2_gfx REQUIRED)
+find_library(SDL2_image SDL2_image)
+find_library(SDL2_mixer SDL2_mixer)
 
 add_library(main SHARED
     main.c
@@ -14,6 +14,8 @@ add_library(main SHARED
 target_link_libraries(main
     SDL2
     SDL2_gfx
+    SDL2_image
+    SDL2_mixer
     android
     log
 )
