@@ -26,18 +26,27 @@ SDL2_mixer-2.6.3.tar.gz
 $ cd
 $ wget https://github.com/steward-fu/website/releases/download/miyoo-mini/mini_toolchain-v1.0.tar.gz
 $ tar xvf mini_toolchain-v1.0.tar.gz
-$ sudo mini /opt
 
 $ git clone https://github.com/steward-fu/sdl2
 $ cd sdl2
-$ make cfg
 
-$ make gpu
+# Build inside Docker (macOS-friendly)
+$ docker build --platform linux/amd64 -t miyoo-sdl2 .
+$ docker run --rm --platform linux/amd64 \
+    -v /path/to/sdl2:/work \
+    -v /path/to/mini_toolchain-v1.0/mini:/opt/mini \
+    -v /path/to/mini_toolchain-v1.0/prebuilt:/opt/prebuilt \
+    -w /work miyoo-sdl2 bash -lc "\
+    ln -sf /opt/prebuilt/arm-linux-gnueabihf/bin/ld.bfd /opt/prebuilt/arm-linux-gnueabihf/bin/ld; \
+    ln -sf /opt/prebuilt/arm-linux-gnueabihf/bin/ld.bfd /opt/prebuilt/bin/arm-linux-gnueabihf-ld; \
+    ln -sf /opt/prebuilt/arm-linux-gnueabihf/bin/ld.bfd /opt/prebuilt/bin/arm-linux-gnueabihf-ld.bfd; \
+    export PATH=/opt/prebuilt/arm-linux-gnueabihf/bin:/opt/prebuilt/bin:/opt/mini/bin:$PATH; \
+    make cfg && make gpu && make sdl2"
+
 $ ls swiftshader/build/lib*
     swiftshader/build/libEGL.so
     swiftshader/build/libGLESv2.so
 
-$ make sdl2
 $ ls sdl2/build/.libs/libSDL2-2.0.so.0*
     sdl2/build/.libs/libSDL2-2.0.so.0
     sdl2/build/.libs/libSDL2-2.0.so.0.18.2
